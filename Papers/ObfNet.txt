@@ -1,0 +1,5 @@
+ObfNet paper 2019:
+https://arxiv.org/abs/1909.09804
+
+ObfNet paper 2020:
+https://arxiv.org/abs/1912.09859

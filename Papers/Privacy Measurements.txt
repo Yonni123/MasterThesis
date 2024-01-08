@@ -1,0 +1,9 @@
+Survey:
+https://arxiv.org/abs/2010.10139
+
+The structural similarity index measure (SSIM):
+https://pubmed.ncbi.nlm.nih.gov/15376593/
+https://www.mdpi.com/2076-3417/12/8/3997
+
+The Haar wavelet-based perceptual similarity index (HaarPSI):
+https://arxiv.org/abs/1607.06140
