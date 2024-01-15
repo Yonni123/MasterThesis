@@ -1,5 +1,5 @@
 # This is the original source code for ObfNet taken from:
-# https://github.com/ntu-aiot/ObfNet/blob/master/mnist/main.py
+# https://github.com/ntu-aiot/ObfNet/blob/master/asl/main.py
 
 from __future__ import print_function
 from tensorflow.keras.datasets import mnist
@@ -114,7 +114,7 @@ def main(is_inf, is_inf_cnn, is_obf_cnn, num_neuron, inf_path, save_image):
 
     # the data, split between train and test sets
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    # cv2.imwrite('imgs/0.jpg', x_test[0])
+    # cv2.imwrite('imgs/3.jpg', x_test[0])
     if K.image_data_format() == 'channels_first':
         x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
         x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)

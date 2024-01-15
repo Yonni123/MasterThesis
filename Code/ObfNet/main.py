@@ -2,7 +2,7 @@ import cv2
 from keras.utils import load_img
 from matplotlib import pyplot as plt
 from tensorflow.keras.datasets import mnist
-from tensorflow.keras.models import Sequential, load_model, Model
+from tensorflow.keras.models import Sequential, load_model, Model, clone_model
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D
 from tensorflow.keras import backend as K
 from tensorflow.keras.utils import to_categorical
@@ -42,7 +42,9 @@ def predict_image(path, model):
     predictions = model.predict(x)
     return np.argmax(predictions[0])
 
-def extract_obfnet(model, split_layer_index):
+def extract_obfnet(model):
+    split_layer_index = len(model.layers) - 1   # The last layer is the Sequential layer which is the inference model
+
     # Split the combined model into inference and obfuscation models
     layers = model.layers[:split_layer_index]
 
@@ -59,21 +61,25 @@ def extract_obfnet(model, split_layer_index):
 
     return obfnet
 
-def extract_infnet(model, split_layer_index):
-    # Split the combined model into inference and obfuscation models
-    layers = model.layers[split_layer_index:]
+def extract_infnet(model):
+    split_layer_index = len(model.layers) - 1   # The last layer is the Sequential layer which is the inference model
 
-    # Extract input and output tensors
-    input_tensor = layers[0].input
-    output_tensor = layers[-1].output
+    # Check if the last layer is Sequential
+    last_layer = model.layers[-1]
+    if isinstance(last_layer, Sequential):
+        # If so, extract the inference model from the Sequential layer
+        infnet = Sequential()
+        for layer in last_layer.layers:
+            infnet.add(layer)
 
-    # Create the inference model
-    infnet = Model(inputs=input_tensor, outputs=output_tensor)
+        # Transfer weights of the layers
+        for i in range(len(infnet.layers)):
+            infnet.layers[i].set_weights(last_layer.layers[i].get_weights())
 
-    # Transfer weights of the layers
-    infnet.set_weights("models/mnist/inf-cnn.h5")
+        return infnet
+    else:
+        raise Exception('The last layer is not Sequential')
 
-    return infnet
 
 def obfuscate_image(path, model):
     size = (model.input_shape[1], model.input_shape[2])
@@ -99,11 +105,14 @@ obfmodel = get_obfmodel(input_shape, 100)
 combined_model = Model(inputs=obfmodel.input, outputs=inference_model(obfmodel.output))
 combined_model.load_weights('models/mnist/combined-model.h5')
 
-img_path = '../Random_Images/MNIST/0.jpg'
-print("Prediction: ", predict_image(img_path, inference_model))
+img_path = '../Random_Images/MNIST/3.jpg'
+print("Prediction: ", predict_image(img_path, combined_model))
 
-obfnet = extract_obfnet(combined_model, 5)
+obfnet = extract_obfnet(combined_model)
 obf_image = obfuscate_image(img_path, obfnet)
 plt.imshow(obf_image, cmap='gray')
 plt.title('Obfuscated Image')
 plt.show()
+
+infnet = extract_infnet(combined_model)
+print("Prediction: ", predict_image(img_path, infnet))
