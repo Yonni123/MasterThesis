@@ -39,7 +39,7 @@ def predict_image(path, model):
     x = np.expand_dims(x, axis=3)
     x = x.astype('float32')
     x /= 255
-    predictions = model.predict(x)
+    predictions = model.predict(x, verbose=0)
     return np.argmax(predictions[0])
 
 def extract_obfnet(model):
@@ -82,6 +82,10 @@ def extract_infnet(model):
 
 
 def obfuscate_image(path, model):
+    # Make sure that the input of the model is equal to the output of the model
+    if model.input_shape != model.output_shape:
+        raise Exception('The input and output shapes of the model are not equal')
+
     size = (model.input_shape[1], model.input_shape[2])
     img = load_img(path, target_size=size)
     x = np.array(img)
@@ -90,7 +94,7 @@ def obfuscate_image(path, model):
     x = np.expand_dims(x, axis=3)
     x = x.astype('float32')
     x /= 255
-    obf_image = model.predict(x)[0]
+    obf_image = model.predict(x, verbose=0)[0]
     obf_image = np.squeeze(obf_image, axis=2)
     obf_image *= 255
     obf_image = obf_image.astype('uint8')
@@ -106,13 +110,14 @@ combined_model = Model(inputs=obfmodel.input, outputs=inference_model(obfmodel.o
 combined_model.load_weights('models/mnist/combined-model.h5')
 
 img_path = '../Random_Images/MNIST/3.jpg'
-print("Prediction: ", predict_image(img_path, combined_model))
+print("Combined prediction: ", predict_image(img_path, combined_model))
 
 obfnet = extract_obfnet(combined_model)
 obf_image = obfuscate_image(img_path, obfnet)
 plt.imshow(obf_image, cmap='gray')
 plt.title('Obfuscated Image')
 plt.show()
+cv2.imwrite('../Random_Images/MNIST/obfuscated3.jpg', obf_image)
 
 infnet = extract_infnet(combined_model)
-print("Prediction: ", predict_image(img_path, infnet))
+print("Obfuscate prediction: ", predict_image('../Random_Images/MNIST/obfuscated3.jpg', infnet))

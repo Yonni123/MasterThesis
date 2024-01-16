@@ -1,5 +1,5 @@
 # This is the original source code for ObfNet taken from:
-#
+# https://github.com/ntu-aiot/ObfNet/blob/master/asl/main.py
 
 import os
 import numpy as np

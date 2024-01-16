@@ -1,5 +1,5 @@
 # This is the original source code for ObfNet taken from:
-# https://github.com/ntu-aiot/ObfNet/blob/master/asl/main.py
+# https://github.com/ntu-aiot/ObfNet/blob/master/mnist/main.py
 
 from __future__ import print_function
 from tensorflow.keras.datasets import mnist
