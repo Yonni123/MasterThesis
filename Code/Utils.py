@@ -10,6 +10,13 @@ import numpy as np
 tf.random.set_seed(1)   # For reproducibility
 np.random.seed(1)
 
+
+def join_models(obfuscation_model, inference_model):
+    # Make sure that the input of the obfuscation model is equal to the output of the inference model
+    if obfuscation_model.input_shape != inference_model.output_shape:
+        raise Exception('The input and output shapes of the obfuscation model are not equal to the output and input shapes of the inference model')
+    return Model(inputs=obfuscation_model.input, outputs=inference_model(obfuscation_model.output))
+
 def get_infmodel(input_shape, num_classes):
     model = Sequential()
     model.add(Flatten(input_shape=input_shape))

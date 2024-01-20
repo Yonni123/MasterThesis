@@ -32,8 +32,8 @@ def resize_images_in_dir(orig_dir, new_dir, target_size, progress=True):
         if progress:
             print(filename + ' resized!')
 
-path = 'D:\ImageNet\\ILSVRC\Data\CLS-LOC\\val'
-new_path = 'D:\ImageNet\\ILSVRC\Data\CLS-LOC\\res_val'
+path = 'D:\ImageNet\Original_Dataset\\ILSVRC\Data\CLS-LOC\\test'
+new_path = 'D:\ImageNet\Original_Dataset\\ILSVRC\Data\CLS-LOC\\res_test'
 path = os.path.abspath(path) + '/'
 new_path = os.path.abspath(new_path) + '/'
 resize_images_in_dir(path, new_path, (224, 224), progress=True)
