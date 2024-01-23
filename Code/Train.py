@@ -9,20 +9,22 @@ import random
 record = keras.callbacks.History()
 
 import time
-import useful
-import conf
+import Helper
+import TrainingSettings
 
 class CustomSaver(keras.callbacks.Callback):
     def __init__(self, path, freq):
         self.path = path
         self.freq = freq
 
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_end(self, epoch, logs=None):
+        if logs is None:
+            logs = {}
         global record
-        if (self.freq==0):
+        if self.freq==0:
             return
-        if epoch>1 and not((epoch%self.freq)):  # save each k-th epoch etc.
-            useful.savetofile(self.path+".hist", record.history)
+        if epoch>1 and not(epoch % self.freq):  # save each k-th epoch etc.
+            Helper.savetofile(self.path+".hist", record.history)
             print(record)
 
 class CheckPoint(tf.keras.callbacks.ModelCheckpoint):
@@ -38,19 +40,21 @@ class CheckPoint(tf.keras.callbacks.ModelCheckpoint):
                          save_weights_only=save_weights_only,
                          save_freq='epoch')
 
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_end(self, epoch, logs=None):
+        if logs is None:
+            logs = {}
         global record
-        if (self.freq==0):
+        if self.freq==0:
             return
-        if epoch>1 and not((epoch%self.freq)):
-            useful.savetofile(self.path+"data.hist", record.history)
+        if epoch>1 and not(epoch % self.freq):
+            Helper.savetofile(self.path+"data.hist", record.history)
             super().on_epoch_end(epoch, logs)
 
 def loadData(c):
-    tsamples = sum([len(files) for _, _, files in os.walk(c.dTranDir)])
-    vsamples = sum([len(files) for _, _, files in os.walk(c.dValDir)])
-    print("Number of training samples : "+str(tsamples))
-    print("Number of validation samples : {}"+str(vsamples))
+    n_train = sum([len(files) for _, _, files in os.walk(c.dTranDir)])
+    n_val = sum([len(files) for _, _, files in os.walk(c.dValDir)])
+    print("Number of training samples : "+str(n_train))
+    print("Number of validation samples : {}"+str(n_val))
 
     # Set PIL to allow image files that are truncated.
     train_datagen = keras.preprocessing.image.ImageDataGenerator(

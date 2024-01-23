@@ -13,8 +13,8 @@ np.random.seed(1)
 
 def join_models(obfuscation_model, inference_model):
     # Make sure that the input of the obfuscation model is equal to the output of the inference model
-    if obfuscation_model.input_shape != inference_model.output_shape:
-        raise Exception('The input and output shapes of the obfuscation model are not equal to the output and input shapes of the inference model')
+    if obfuscation_model.input_shape != inference_model.input_shape or obfuscation_model.output_shape != inference_model.input_shape:
+        raise Exception('The input and output shapes of the obfuscation model are not equal to the input shape of the inference model')
     return Model(inputs=obfuscation_model.input, outputs=inference_model(obfuscation_model.output))
 
 def get_infmodel(input_shape, num_classes):
@@ -26,17 +26,12 @@ def get_infmodel(input_shape, num_classes):
     model.add(Dense(num_classes, activation='softmax'))
     return model
 
-def get_ResNet50():
+def get_pretrained_ResNet50():
     model = ResNet50(weights='imagenet')
     return model
 
-def get_obfmodel(input_shape, num_neuron=100):
-    model = Sequential()
-    model.add(Flatten(input_shape=input_shape))
-    model.add(Dense(num_neuron, activation='relu'))
-    model.add(Dense(28 * 28, activation='relu'))
-    model.add(Reshape(input_shape))
-    return model
+def freeze_infmodel(model):
+    model.layers[-1].trainable = False  # Freeze the last layer
 
 def predict_image(path, model):
     size = (model.input_shape[1], model.input_shape[2])

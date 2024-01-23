@@ -2,6 +2,7 @@ import cv2
 from keras.utils import load_img
 from matplotlib import pyplot as plt
 from tensorflow.keras.models import Sequential, load_model, Model, clone_model
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D, Activation
 
 import Utils as utils
 
@@ -11,23 +12,25 @@ tf.random.set_seed(1)   # For reproducibility
 np.random.seed(1)
 
 
-num_classes = 1000  # Number of classes in the dataset
-input_shape = (224, 224, 3)
+def aaaaa(target_dims, num_neuron):
+    model = Sequential()
+    model.add(
+        Conv2D(32,
+               kernel_size=(3, 3),
+               activation='relu',
+               input_shape=(target_dims)))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
 
-inference_model = utils.get_ResNet50()  # Load the pre-trained ResNet50 model
-obfmodel = utils.get_obfmodel(input_shape, num_neuron=100)
-combined_model = Model(inputs=obfmodel.input, outputs=inference_model(obfmodel.output))
-combined_model.load_weights('models/mnist/combined-model.h5')
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    model.add(Dense(num_neuron))
 
-img_path = '../Random_Images/MNIST/3.jpg'
-print("Combined prediction: ", predict_image(img_path, combined_model))
+    model.add(Activation('relu'))
+    model.add(Dense(np.prod(target_dims)))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.4))
+    model.add(Reshape(target_dims))
+    return model
 
-obfnet = extract_obfnet(combined_model)
-obf_image = obfuscate_image(img_path, obfnet)
-plt.imshow(obf_image, cmap='gray')
-plt.title('Obfuscated Image')
-plt.show()
-cv2.imwrite('../Random_Images/MNIST/obfuscated3.jpg', obf_image)
-
-infnet = extract_infnet(combined_model)
-print("Obfuscate prediction: ", predict_image('../Random_Images/MNIST/obfuscated3.jpg', infnet))
+m = aaaaa((28, 28, 3), 1000)
+m.summary()

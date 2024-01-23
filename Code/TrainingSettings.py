@@ -14,6 +14,7 @@ class TrainingSettings:
         # data directory
         self.train_dir = ''   # path to training data
         self.val_dir = ''    # path to validation data
+        self.input_shape = (224, 224, 3)  # input shape, (height, width, channels)
 
         # training settings
         self.save = True            # save model and logs
@@ -31,5 +32,5 @@ class TrainingSettings:
         self.classes = 1000         # number of classes
 
         # ObfNet shape  input -> (layer, layer) -> output, layer = [type, size]
-        # type = 0: Dense, 1: Conv2D, size = number of neurons or filters
-        self.obf_shape = ([0, 1000], [0, 1000])
+        # type = Dense, Conv2D, size = number of neurons or filter size
+        self.obf_layers = [('Dense', [1000]), ('Conv2D', [3, 3]), ('Dense', [1000]), ('Conv2D', [3, 3]), ('Dense', [1000])]

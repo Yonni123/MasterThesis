@@ -1,16 +1,15 @@
-from keras.applications.resnet import ResNet50, preprocess_input, decode_predictions
+from keras.applications.vgg16 import VGG16, preprocess_input, decode_predictions
 from matplotlib import pyplot as plt
 from tensorflow.keras.utils import load_img
 import numpy as np
 import os
 
-#img_path = 'Random_Images/fish.jpg'
-img_path = 'D:\ImageNet\Imagenet_Small\\ahh'
+# img_path = 'Random_Images/fish.jpg'
+img_path = 'D:/ImageNet/Imagenet_Small/ahh'
 
-# Load the pre-trained ResNet50 model
-model = ResNet50(weights='imagenet')
+# Load the pre-trained VGG16 model
+model = VGG16(weights='imagenet')
 model.summary()
-quit()
 
 # Load an image (replace 'path_to_your_image.jpg' with your image file)
 # If path is not a directory, assume it is an image file
@@ -21,7 +20,7 @@ else:
     # If path is a directory, assume it is a directory of images and load them all in shape (-1, 224, 224, 3)
     img = []
     for filename in os.listdir(img_path):
-        image = np.array(load_img(img_path + '/' + filename, target_size=(224, 224)))
+        image = np.array(load_img(os.path.join(img_path, filename), target_size=(224, 224)))
         img.append(image)
     img = np.array(img)
 
