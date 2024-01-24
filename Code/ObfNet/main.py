@@ -80,6 +80,11 @@ def extract_infnet(model):
     else:
         raise Exception('The last layer is not Sequential')
 
+def get_mid_out(model, layer_num, data):
+    get_output = K.function([model.layers[0].input],
+                            [model.layers[layer_num].output])
+    return get_output([data])[0]
+
 
 def obfuscate_image(path, model):
     # Make sure that the input of the model is equal to the output of the model
@@ -121,3 +126,17 @@ cv2.imwrite('../Random_Images/MNIST/obfuscated3.jpg', obf_image)
 
 infnet = extract_infnet(combined_model)
 print("Obfuscate prediction: ", predict_image('../Random_Images/MNIST/obfuscated3.jpg', infnet))
+
+img = load_img(img_path, target_size=(28, 28))
+x = np.array(img)
+x = cv2.cvtColor(x, cv2.COLOR_BGR2GRAY)
+x = np.expand_dims(x, axis=0)
+x = np.expand_dims(x, axis=3)
+x = x.astype('float32')
+x /= 255
+midout = get_mid_out(combined_model, 4, x)
+# Remove first and last dimensions
+midout = np.squeeze(midout, axis=0)
+midout = np.squeeze(midout, axis=2)
+midout *= 255
+cv2.imwrite('imgs/mnist/obfresult.jpg', midout)
