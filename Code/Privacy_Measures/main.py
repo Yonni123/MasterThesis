@@ -19,9 +19,9 @@ def get_measurements(original_image, distorted_image):
 
 
 # Define file paths for the images
-fish_path = '../Random_Images/fish.jpg'
-fish_noise_path = '../Random_Images/fish_noise.jpg'
-lion_path = '../Random_Images/lion.jpg'
+fish_path = '../Images/fish.jpg'
+fish_noise_path = '../Images/fish_noise.jpg'
+lion_path = '../Images/lion.jpg'
 
 # Load the images using Matplotlib's imread function
 fish = np.array(imread(fish_path))

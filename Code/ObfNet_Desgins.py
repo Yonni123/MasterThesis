@@ -93,9 +93,9 @@ def deconv(input_shape):
 m = deconv((224, 224, 3))
 m.summary()
 
-# quit()
+quit()
 
-img = cv2.imread('Random_Images/lion.jpg')
+img = cv2.imread('Images/lion.jpg')
 img = cv2.resize(img, (224, 224))
 cv2.imshow('Original Image', img)
 img_array = np.array(img)
