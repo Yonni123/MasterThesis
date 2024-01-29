@@ -90,38 +90,39 @@ def deconv(input_shape):
     return model
 
 
-m = deconv((224, 224, 3))
-m.summary()
+if __name__ == "__main__":
+    m = deconv((224, 224, 3))
+    m.summary()
 
-quit()
+    quit()
 
-img = cv2.imread('Images/lion.jpg')
-img = cv2.resize(img, (224, 224))
-cv2.imshow('Original Image', img)
-img_array = np.array(img)
-img_array_channelfirst = np.moveaxis(img_array, -1, 0)
+    img = cv2.imread('Images/lion.jpg')
+    img = cv2.resize(img, (224, 224))
+    cv2.imshow('Original Image', img)
+    img_array = np.array(img)
+    img_array_channelfirst = np.moveaxis(img_array, -1, 0)
 
-img_array = np.expand_dims(img_array, axis=0)
-img_array = img_array.astype('float32')
-img_array /= 255
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = img_array.astype('float32')
+    img_array /= 255
 
-# Add random weights to the model
-for layer in m.layers:
-    print(layer.name)
-    print(layer.get_weights())
-    random_weights = []
-    for weight in layer.get_weights():
-        random_weights.append(np.random.rand(*weight.shape))
-    layer.set_weights(random_weights)
-    print('After:')
-    print(layer.get_weights())
+    # Add random weights to the model
+    for layer in m.layers:
+        print(layer.name)
+        print(layer.get_weights())
+        random_weights = []
+        for weight in layer.get_weights():
+            random_weights.append(np.random.rand(*weight.shape))
+        layer.set_weights(random_weights)
+        print('After:')
+        print(layer.get_weights())
 
-# Make predictions
-res = m.predict(img_array)
-res = np.squeeze(res, axis=0)
-res_channelfirst = np.moveaxis(res, 0, -1)
-res *= 255
+    # Make predictions
+    res = m.predict(img_array)
+    res = np.squeeze(res, axis=0)
+    res_channelfirst = np.moveaxis(res, 0, -1)
+    res *= 255
 
-res = res.astype('uint8')
-cv2.imshow('Resized Image', res)
-cv2.waitKey(0)
+    res = res.astype('uint8')
+    cv2.imshow('Resized Image', res)
+    cv2.waitKey(0)

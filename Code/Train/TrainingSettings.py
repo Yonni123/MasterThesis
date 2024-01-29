@@ -27,7 +27,3 @@ class TrainingSettings:
         self.label_smoothing = 0    # label smoothing
         self.dropout = 0            # dropout rate
         self.classes = 1000         # number of classes
-
-        # _ObfNet_(SourceCode) shape  input -> (layer, layer) -> output, layer = [type, size]
-        # type = Dense, Conv2D, size = number of neurons or filter size
-        self.obf_layers = [('Dense', [1000]), ('Conv2D', [3, 3]), ('Dense', [1000]), ('Conv2D', [3, 3]), ('Dense', [1000])]

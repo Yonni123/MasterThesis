@@ -50,21 +50,15 @@ class CheckPoint(tf.keras.callbacks.ModelCheckpoint):
             Helper.savetofile(self.path+"data.hist", record.history)
             super().on_epoch_end(epoch, logs)
 
-def loadData(c):
-    n_train = sum([len(files) for _, _, files in os.walk(c.dTranDir)])
-    n_val = sum([len(files) for _, _, files in os.walk(c.dValDir)])
-    print("Number of training samples : "+str(n_train))
-    print("Number of validation samples : {}"+str(n_val))
-
-    # Set PIL to allow image files that are truncated.
+def loadData(ts):
     train_datagen = keras.preprocessing.image.ImageDataGenerator(
         preprocessing_function=resnet50.preprocess_input,
-        rotation_range=c.rotation_range,
-        brightness_range=c.brightness_range,
-        width_shift_range=c.width_shift_range,
-        height_shift_range=c.height_shift_range,
-        zoom_range=c.zoom_range,
-        channel_shift_range=c.channel_shift_range,
+        rotation_range=ts.rotation_range,
+        brightness_range=ts.brightness_range,
+        width_shift_range=ts.width_shift_range,
+        height_shift_range=ts.height_shift_range,
+        zoom_range=ts.zoom_range,
+        channel_shift_range=ts.channel_shift_range,
         data_format=K.image_data_format()
     )
 
@@ -74,17 +68,17 @@ def loadData(c):
     )
 
     tg = train_datagen.flow_from_directory(
-        c.dTranDir,
-        target_size=(c.imgSize, c.imgSize),
-        batch_size=c.batch_size,
+        ts.train_dir,
+        target_size=(ts.imgSize, ts.imgSize),
+        batch_size=ts.batch_size,
         shuffle=True,
         class_mode='categorical'
     )
 
     vg = val_datagen.flow_from_directory(
-        c.dValDir,
-        target_size=(c.imgSize, c.imgSize),
-        batch_size=c.batch_size,
+        ts.val_dir,
+        target_size=(ts.imgSize, ts.imgSize),
+        batch_size=ts.batch_size,
         shuffle=False,
         class_mode='categorical'
     )

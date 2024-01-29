@@ -1,6 +1,8 @@
 from tensorflow.keras.applications.resnet import preprocess_input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import Utils
+import PATHS
+import tensorflow as tf
 
 
 def evaluate_model(model, dir, pre_process=None):
@@ -26,7 +28,7 @@ def evaluate_model(model, dir, pre_process=None):
 
 if __name__ == "__main__":
     model = Utils.get_pretrained_ResNet50()
-    dir = Utils.IMAGENET_PATH + 'val'
+    dir = PATHS.IMAGENET_PATH + 'val'
     model.compile(optimizer='adam',  # Use the optimizer of your choice
                   loss='categorical_crossentropy',  # Use the appropriate loss function for your problem
                   metrics=['accuracy'])  # Add any other metrics you want to track during evaluation
