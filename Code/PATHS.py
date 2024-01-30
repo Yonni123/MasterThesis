@@ -4,3 +4,4 @@ sys.path.insert(2, 'Privacy_Measures')
 sys.path.insert(3, 'Train')
 
 IMAGENET_PATH = 'C:\ImageNet\\'
+IMAGENET10c_PATH = 'C:\ImageNet10c\\'

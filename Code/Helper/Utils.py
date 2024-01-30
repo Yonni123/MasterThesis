@@ -1,4 +1,5 @@
 import cv2
+from keras.layers import GlobalAveragePooling2D
 from keras.utils import load_img
 from tensorflow.keras.models import Sequential, load_model, Model, clone_model
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Reshape, Conv2D, MaxPooling2D
@@ -104,5 +105,25 @@ def get_pretrained_ResNet50():
     Notes:
     - Make sure to have an internet connection as the weights are downloaded from the internet.
     """
-    model = ResNet50(weights='imagenet')
+    # Load the ResNet50 model with pre-trained weights
+    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+
+    # Freeze the layers of the base model
+    for layer in base_model.layers:
+        layer.trainable = False
+
+    # Add custom classification layers
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(1024, activation='relu')(x)
+    x = Dense(512, activation='relu')(x)
+    predictions = Dense(10, activation='softmax')(x)
+
+    # Create the final model
+    model = Model(inputs=base_model.input, outputs=predictions)
+    model.load_weights('../History/ResNet10c/session_20240130_133837_final.h5')
     return model
+
+if __name__ == "__main__":
+    model = get_pretrained_ResNet50()
+    model.summary()
