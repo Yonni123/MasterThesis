@@ -1,4 +1,5 @@
 import cv2
+import PATHS
 from keras.layers import GlobalAveragePooling2D
 from keras.utils import load_img
 from tensorflow.keras.models import Sequential, load_model, Model, clone_model
@@ -95,22 +96,19 @@ def freeze_inf_model(combined_model):
     combined_model.layers[1].trainable = False
 
 
-def get_pretrained_ResNet50():
+def get_pretrained_ResNet50(weights_dir):
     """
     Load a pre-trained ResNet50 model with weights trained on ImageNet.
+    This version of ResNet50 was retrained to work with only 10 classes
+
+    Parameters:
+    - weights_dir (String): The path to the .h5 weights file
 
     Returns:
     Model: A pre-trained ResNet50 model.
-
-    Notes:
-    - Make sure to have an internet connection as the weights are downloaded from the internet.
     """
     # Load the ResNet50 model with pre-trained weights
-    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-
-    # Freeze the layers of the base model
-    for layer in base_model.layers:
-        layer.trainable = False
+    base_model = ResNet50(weights=None, include_top=False, input_shape=(224, 224, 3))
 
     # Add custom classification layers
     x = base_model.output
@@ -121,9 +119,9 @@ def get_pretrained_ResNet50():
 
     # Create the final model
     model = Model(inputs=base_model.input, outputs=predictions)
-    model.load_weights('../History/ResNet10c/session_20240130_133837_final.h5')
+    model.load_weights(weights_dir)
     return model
 
 if __name__ == "__main__":
-    model = get_pretrained_ResNet50()
+    model = get_pretrained_ResNet50(PATHS.RESNET_WEIGHTS)
     model.summary()

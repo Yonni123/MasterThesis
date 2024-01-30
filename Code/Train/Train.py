@@ -49,6 +49,6 @@ def train(model, ts):
 
     # Save the trained model
     if ts.save:
-        model.save(ts.name + '_final.h5')
+        model.save(ts.save_dir + ts.name + '_final.h5')
 
     return history

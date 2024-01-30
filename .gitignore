@@ -5,3 +5,4 @@ Code/.idea
 Code/_ObfNet_(SourceCode)/models/mnist/combined-model.h5
 Code/_ObfNet_(SourceCode)/models/mnist/inf-cnn.h5
 Code/History/ResNet10c/session_20240130_133837_final.h5
+*.h5
