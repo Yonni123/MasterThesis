@@ -1,3 +1,6 @@
 
 IgnoreThis/*
 Code/.idea
+*.pyc
+Code/_ObfNet_(SourceCode)/models/mnist/combined-model.h5
+Code/_ObfNet_(SourceCode)/models/mnist/inf-cnn.h5

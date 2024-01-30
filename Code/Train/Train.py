@@ -1,134 +1,54 @@
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import backend as K
-import tensorflow.keras.applications.resnet50 as resnet50
-import os
-import numpy as np
-import random
-
-record = keras.callbacks.History()
-
-import time
+import Train
+import TrainingSettings as TS
+from Helper import Utils
 import Helper
-import TrainingSettings
+import PATHS
+import ObfNet_Desgins as OND
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.resnet import preprocess_input
 
-class CustomSaver(keras.callbacks.Callback):
-    def __init__(self, path, freq):
-        self.path = path
-        self.freq = freq
 
-    def on_epoch_end(self, epoch, logs=None):
-        if logs is None:
-            logs = {}
-        global record
-        if self.freq==0:
-            return
-        if epoch>1 and not(epoch % self.freq):  # save each k-th epoch etc.
-            Helper.savetofile(self.path+".hist", record.history)
-            print(record)
-
-class CheckPoint(tf.keras.callbacks.ModelCheckpoint):
-    def __init__(self, filepath, monitor, verbose, save_best_only,
-                 save_weights_only, save_freq):
-        self.freq = save_freq
-        self.path = filepath
-        filepath += "best.h5"
-        super().__init__(filepath=filepath,
-                         monitor=monitor,
-                         verbose=verbose,
-                         save_best_only=save_best_only,
-                         save_weights_only=save_weights_only,
-                         save_freq='epoch')
-
-    def on_epoch_end(self, epoch, logs=None):
-        if logs is None:
-            logs = {}
-        global record
-        if self.freq==0:
-            return
-        if epoch>1 and not(epoch % self.freq):
-            Helper.savetofile(self.path+"data.hist", record.history)
-            super().on_epoch_end(epoch, logs)
-
-def loadData(ts):
-    train_datagen = keras.preprocessing.image.ImageDataGenerator(
-        preprocessing_function=resnet50.preprocess_input,
-        rotation_range=ts.rotation_range,
-        brightness_range=ts.brightness_range,
-        width_shift_range=ts.width_shift_range,
-        height_shift_range=ts.height_shift_range,
-        zoom_range=ts.zoom_range,
-        channel_shift_range=ts.channel_shift_range,
-        data_format=K.image_data_format()
+def train(model, ts):
+    # Create data generators with data augmentation for training set
+    train_datagen = ImageDataGenerator(
+        preprocessing_function=ts.preprocess_function
     )
 
-    val_datagen = keras.preprocessing.image.ImageDataGenerator(
-        preprocessing_function=resnet50.preprocess_input,
-        data_format=K.image_data_format()
-    )
+    # Data generator for validation set (only rescaling)
+    val_datagen = ImageDataGenerator(preprocessing_function=ts.preprocess_function)
 
-    tg = train_datagen.flow_from_directory(
+    # Flow training images in batches using the generators
+    train_generator = train_datagen.flow_from_directory(
         ts.train_dir,
-        target_size=(ts.imgSize, ts.imgSize),
+        target_size=(ts.img_size, ts.img_size),
         batch_size=ts.batch_size,
-        shuffle=True,
-        class_mode='categorical'
+        class_mode=ts.class_mode
     )
 
-    vg = val_datagen.flow_from_directory(
+    # Flow validation images in batches using the generators
+    val_generator = val_datagen.flow_from_directory(
         ts.val_dir,
-        target_size=(ts.imgSize, ts.imgSize),
+        target_size=(ts.img_size, ts.img_size),
         batch_size=ts.batch_size,
-        shuffle=False,
-        class_mode='categorical'
+        class_mode=ts.class_mode
     )
 
-    return (tg, vg)
+    # Compile the model
+    model.compile(
+        optimizer=ts.optimizer,
+        loss=ts.loss,
+        metrics=ts.metrics
+    )
 
-class HackyMcHackface(tf.keras.utils.Sequence):
-    def __init__(self, it):
-        self.it = it
+    # Train the model
+    history = model.fit(
+        train_generator,
+        epochs=ts.epochs,
+        validation_data=val_generator
+    )
 
-    def __len__(self):
-        return self.it.__len__()
+    # Save the trained model
+    if ts.save:
+        model.save(ts.name + '_final.h5')
 
-    def __getitem__(self, idx):
-        (a,b) = self.it.__getitem__(idx)
-        return (a[:,:,:,:3],b)
-
-    def on_epoch_end(self):
-        return self.it.on_epoch_end()
-
-def train(model, data, c):
-    (tg, vg) = data
-    global record
-    callbacks = [
-        record,
-        #CustomSaver(name, savefreq),
-        CheckPoint(
-            filepath=c.path,
-            monitor='val_loss',
-            verbose=1,
-            save_best_only=True,
-            save_weights_only=False,
-            save_freq=c.savefreq
-        )
-    ]
-    if (c.earltstop):
-        callbacks.append(tf.keras.callbacks.EarlyStopping(
-            monitor="val_loss",
-            min_delta=c.min_delta,
-            patience=c.patience,
-            mode="min",
-            restore_best_weights=True,
-        ))
-    if(c.startfrom==False):
-        model.compile(optimizer=tf.keras.optimizers.Adam(c.trainingRate), loss=keras.losses.CategoricalCrossentropy(label_smoothing=c.label_smoothing), metrics=["accuracy"])
-    else:
-        keras.backend.set_value(model.optimizer.learning_rate, c.trainingRate)
-        #keras.backend.set_value(model.loss,keras.losses.CategoricalCrossentropy(label_smoothing=c.label_smoothing))
-    try:
-        model.fit(tg, epochs=c.epochs , callbacks=callbacks, validation_data=vg, class_weight=c.class_weight)
-    except KeyboardInterrupt:
-        print("Aborted training!")
-    return record
+    return history
