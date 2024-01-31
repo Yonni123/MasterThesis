@@ -33,8 +33,8 @@ def join_models(obfuscation_model, inference_model):
     if obfuscation_model.input_shape != inference_model.input_shape or obfuscation_model.output_shape != inference_model.input_shape:
         raise Exception('The input and output shapes of the obfuscation model are not equal to the input shape of the inference model')
 
-    # Give the last layer the name "ObfNet_Out" to know where to split the model later
-    combined_model = Sequential()
+    obfnet_name = obfuscation_model.name
+    combined_model = Sequential(name=obfnet_name)
     combined_model.add(obfuscation_model)
     combined_model.add(inference_model)
     combined_model.layers[0]._name = 'ObfModel'

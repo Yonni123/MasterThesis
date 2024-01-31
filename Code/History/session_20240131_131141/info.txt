@@ -1,0 +1,4 @@
+ObfNet name: deconv
+Best epoch:	 9
+Best acc:	 57.40%
+Best loss:	 1.3820056915283203

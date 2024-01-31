@@ -1,4 +1,5 @@
 import datetime
+import PATHS
 
 
 def generate_session_name():
@@ -21,8 +22,7 @@ class TrainingSettings:
 
         # logs
         self.save = True  # save model and logs
-        self.save_freq = 10  # save model every n epochs
-        self.save_dir = '../History/'  # path to save model and logs
+        self.logger = None  # Leave this as is, a logger will be assigned during training if save = True
 
         # training settings
         self.early_stop = True  # stop training early if validation loss does not improve

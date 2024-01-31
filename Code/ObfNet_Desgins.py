@@ -38,7 +38,7 @@ def conv_reshape(input_shape):
 
 def up_scaled(input_shape):
     model = Sequential()
-    model._name = 'up-scaled_model'
+    model._name = 'up-scaled_model v1.0'
 
     # 3 convolutional layers to reduce the image size from 224x224 to 112x112 to 56x56 to 28x28
     model.add(Conv2D(3, kernel_size=(3, 3), activation='relu', padding='same', input_shape=input_shape))
@@ -60,12 +60,12 @@ def up_scaled(input_shape):
     return model
 
 def deconv(input_shape):
-    model = Sequential()
+    model = Sequential(name='deconv')
 
     # 3 convolutional layers to reduce the image size from 224x224 to 112x112 to 56x56 to 28x28
-    model.add(Conv2D(27, kernel_size=(3, 3), activation='relu', padding='same', input_shape=input_shape))
+    model.add(Conv2D(9, kernel_size=(3, 3), activation='relu', padding='same', input_shape=input_shape))
     model.add(MaxPooling2D(pool_size=(2, 2)))   # 112x112x27
-    model.add(Conv2D(9, kernel_size=(3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(6, kernel_size=(3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D(pool_size=(2, 2)))   # 56x56x9
     model.add(Conv2D(3, kernel_size=(3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D(pool_size=(2, 2)))   # 28x28x3
@@ -79,13 +79,14 @@ def deconv(input_shape):
 
     model.add(Conv2DTranspose(3, kernel_size=(3, 3), activation='relu', padding='same'))
     model.add(UpSampling2D(size=(2, 2)))  # 56x56x3
-    model.add(Conv2DTranspose(9, kernel_size=(3, 3), activation='relu', padding='same'))
+    model.add(Conv2DTranspose(6, kernel_size=(3, 3), activation='relu', padding='same'))
     model.add(UpSampling2D(size=(2, 2)))  # 112x112x9
-    model.add(Conv2DTranspose(27, kernel_size=(3, 3), activation='relu', padding='same'))
+    model.add(Conv2DTranspose(9, kernel_size=(3, 3), activation='relu', padding='same'))
     model.add(UpSampling2D(size=(2, 2)))  # 224x224x27
 
     # Output layer
     model.add(Conv2DTranspose(3, kernel_size=(1, 1), activation='sigmoid', padding='same'))
+    model.add(BatchNormalization())
 
     return model
 
