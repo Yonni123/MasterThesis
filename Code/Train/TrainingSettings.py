@@ -26,13 +26,12 @@ class TrainingSettings:
 
         # training settings
         self.early_stop = True  # stop training early if validation loss does not improve
-        self.patience = 4  # number of epochs to wait before early stop
-        self.min_delta = 0  # minimum change in validation loss to be considered as improvement
+        self.patience = 3  # number of epochs to wait before early stop
         self.img_size = 224  # image size
         self.batch_size = 32  # batch size
         self.epochs = 50  # number of epochs
         self.learning_rate = 1e-5  # learning rate
-        self.classes = 1000  # number of classes
+        self.classes = 10  # number of classes
 
         # Optimizer and loss
         self.optimizer = 'adam'

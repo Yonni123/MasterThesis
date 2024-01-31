@@ -38,7 +38,7 @@ def conv_reshape(input_shape):
 
 def up_scaled(input_shape):
     model = Sequential()
-    model._name = 'up-scaled_model v1.0'
+    model._name = 'up-scaled_model_v1.0'
 
     # 3 convolutional layers to reduce the image size from 224x224 to 112x112 to 56x56 to 28x28
     model.add(Conv2D(3, kernel_size=(3, 3), activation='relu', padding='same', input_shape=input_shape))
@@ -60,7 +60,7 @@ def up_scaled(input_shape):
     return model
 
 def deconv(input_shape):
-    model = Sequential(name='deconv')
+    model = Sequential(name='deconv_v1.0')
 
     # 3 convolutional layers to reduce the image size from 224x224 to 112x112 to 56x56 to 28x28
     model.add(Conv2D(9, kernel_size=(3, 3), activation='relu', padding='same', input_shape=input_shape))

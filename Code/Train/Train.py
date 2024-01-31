@@ -1,6 +1,6 @@
 import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.callbacks import Callback, TensorBoard
+from tensorflow.keras.callbacks import Callback, TensorBoard, EarlyStopping
 from Helper import Logger
 import PATHS
 from Helper import Utils
@@ -69,13 +69,17 @@ def train(model, ts):
         metrics=ts.metrics
     )
 
-    tensorboard_callback = TensorBoard(log_dir=PATHS.HISTORY_DIR + ts.name + '/TensorBoard', histogram_freq=1)
     custom_callback = CustomCallback(ts)
     cb = [custom_callback]
     if ts.save:
         logger = Logger.Logger(ts, model.name)
         ts.logger = logger
+        tensorboard_callback = TensorBoard(log_dir=PATHS.HISTORY_DIR + ts.name + '/TensorBoard', histogram_freq=1)
         cb.append(tensorboard_callback)
+
+    early_stopping = EarlyStopping(monitor='val_loss', patience=ts.patience, mode='min')
+    if ts.early_stop:
+        cb.append(early_stopping)
 
     # Train the model
     history = model.fit(
@@ -84,5 +88,9 @@ def train(model, ts):
         validation_data=val_generator,
         callbacks=cb
     )
+
+    # Check if early stopping occurred and print a message
+    if ts.early_stop and early_stopping.stopped_epoch > 0:
+        print("Early stopping occurred at epoch", early_stopping.stopped_epoch)
 
     return history
