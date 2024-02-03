@@ -243,6 +243,9 @@ def main(is_inf_cnn, is_obf_cnn, is_rec_cnn, obf_num_neuron, rec_num_neuron, tra
     cv2.imwrite("imgs/mnist/" + save_folder + '/reconstructed.jpg', v)
 
 if __name__ == "__main__":
+    print('ObfNet: CNN')
+    print('RecNet: CNN')
+    print('Obf neurons = Rec neurons: varying')
     for i in range(7):
         num_neurons = 2**(i+3)   # 8, 16, 32, 64, 128, 256, 512
         save_folder = str(num_neurons)
@@ -252,17 +255,17 @@ if __name__ == "__main__":
             # Control type of networks, use CNN or MLP
             is_inf_cnn=True,
             is_obf_cnn=True,
-            is_rec_cnn=False,
+            is_rec_cnn=True,
 
             # Control the number of neurons in ObfNet and RecNet
             obf_num_neuron=num_neurons,
-            rec_num_neuron=512,
+            rec_num_neuron=num_neurons,
 
             # If train is true, it will try to train the corresponding network on MNIST and save weights
             # Otherwise it will try to load the weights (will fail if not trained first, weights file won't be found)
             # Sometimes we want to try out different combinations of ObfNet and RecNet, without re-training the InfNet
             # Keep in mind that if the num_neurons is changed, the corresponding networks affected has to be re-trained
-            train_inf=True,
+            train_inf=False,
             train_obf=True,
             train_rec=True,
 
