@@ -32,26 +32,25 @@ model_paths = {
     'model_1': r'C:\MT\Code\History\session_20240204_001027\\best_obf_weights.h5',
     'model_2': r'C:\MT\Code\History\session_20240203_140656_84%\\best_obf_weights.h5',
     'model_3': r'C:\MT\Code\History\session_20240204_191415\\best_obf_weights.h5',
+    'model_4': r'C:\MT\Code\History\session_20240203_004732_92%\best_obf_weights.h5'
 }
 
 
-# Function to load a model from a given key
-def load_model_from_dict(model_dict, key):
-    model_path = model_dict.get(key)
+# Function to load a specific model
+def load_selected_model(model_dict, selected_key):
+    model_path = model_dict.get(selected_key)
     if model_path:
         return load_model(model_path)
     else:
-        raise ValueError(f'Model with key "{key}" not found in the model dictionary.')
+        raise ValueError(f'Model with key "{selected_key}" not found in the model dictionary.')
 
 
-loaded_models = {key: load_model(model_path) for key, model_path in model_paths.items()}
+# Example usage
+selected_model_key = 'model_1'
+model = load_selected_model(model_paths, selected_model_key)
 
-# Now you can use the dictionary to load models
-selected_model_key = 'model_3'
-model = loaded_models[selected_model_key]
-
-# model = cnn.create_autoencoder_1((224, 224, 3))
-orgImg = np.array(load_img('C:\MT\Code\Images\ImageNet\\img6.JPEG'))
+#model = Diffused_ObfNet.diffused_ObfNet((224, 224, 3))
+orgImg = np.array(load_img('C:\MT\Code\Images\ImageNet\\img3.JPEG'))
 
 img = preprocess_input(orgImg)
 img = np.expand_dims(img, axis=0)

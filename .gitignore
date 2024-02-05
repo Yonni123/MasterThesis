@@ -8,3 +8,5 @@ Code/History/ResNet10c/session_20240130_133837_final.h5
 *.h5
 Code/History/*
 Code/whatever.py
+*.xml
+*.iml
