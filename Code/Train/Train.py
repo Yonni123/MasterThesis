@@ -1,9 +1,9 @@
 import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import Callback, TensorBoard, EarlyStopping
-from Helper import Logger
-import PATHS
-from Helper import Utils
+from Code.Helper import Logger
+from Code import PATHS
+from Code.Helper import Utils
 
 
 def log_epoch(dir, epoch, logs):

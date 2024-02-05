@@ -1,5 +1,5 @@
 import cv2
-import PATHS
+from Code import PATHS
 from keras.layers import GlobalAveragePooling2D
 from keras.utils import load_img
 from tensorflow.keras.models import Sequential, load_model, Model, clone_model
@@ -11,9 +11,14 @@ import pickle
 import datetime
 import tensorflow as tf
 import numpy as np
+from tensorflow.keras.layers import *
 tf.random.set_seed(1)   # For reproducibility
 np.random.seed(1)
 
+def get_resize_layer(target_shape):
+    layer = Lambda(lambda x: tf.image.resize(x, (target_shape[0], target_shape[1])))
+    layer._name = 'up-sample_layer'
+    return layer
 
 def join_models(obfuscation_model, inference_model):
     """

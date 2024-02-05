@@ -1,6 +1,6 @@
 import datetime
-import PATHS
-
+from Code import PATHS
+from tensorflow.keras.optimizers import Adam
 
 def generate_session_name():
     current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -34,6 +34,6 @@ class TrainingSettings:
         self.classes = 10  # number of classes
 
         # Optimizer and loss
-        self.optimizer = 'adam'
+        self.optimizer = Adam(lr=self.learning_rate)
         self.loss = 'categorical_crossentropy',  # or 'binary_cross entropy'
         self.metrics = ['accuracy']

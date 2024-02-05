@@ -3,8 +3,8 @@ from tensorflow import keras
 import tensorflow.keras.applications.resnet50 as resnet50
 import os
 
-import Helper
-import PATHS
+from Code import Helper
+from Code import PATHS
 
 
 def dump_to_txt(array, filename):

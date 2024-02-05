@@ -55,7 +55,7 @@ def up_scaled(input_shape):
 
     # Add an up-scaling layer to increase the size of the output to the original image size
     resize_layer = get_resize_layer(target_shape=input_shape)
-    #model.add(resize_layer)
+    model.add(resize_layer)
 
     return model
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     quit()
 
-    img = cv2.imread('Images/lion.jpg')
+    img = cv2.imread('../Images/lion.jpg')
     img = cv2.resize(img, (224, 224))
     cv2.imshow('Original Image', img)
     img_array = np.array(img)
