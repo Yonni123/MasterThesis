@@ -2,6 +2,7 @@ import os
 import sys
 
 import numpy as np
+from keras.callbacks import ModelCheckpoint
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
@@ -26,53 +27,77 @@ from Designs.Diffused_ObfNet import diffused_ObfNet
 from tensorflow.keras.applications.resnet import preprocess_input
 from tensorflow.keras.models import Sequential, load_model, Model, clone_model
 import warnings
+
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 import pickle as pkl
 
 
+def get_obfmodel_mlp(target_dims, num_neuron=512):
+    model = Sequential()
+    model.add(Flatten(input_shape=(target_dims)))
+    model.add(Dense(num_neuron))
+    model.add(Activation('relu'))
+    model.add(Dense(np.prod(target_dims)))
+    model.add(Activation('relu'))
+    #model.add(Dropout(0.4))
+    model.add(Reshape(target_dims))
+    return model
+
+
+def load_images_from_folder(folder_path):
+    images = []
+    for filename in os.listdir(folder_path):
+        img_path = os.path.join(folder_path, filename)
+        img = cv2.imread(img_path)
+        if img is not None:
+            images.append(img)
+    return np.array(images)
+
+
 com_path = 'models/asl/combined-model.h5'
 combined_model = load_model(com_path)
-obf = Sequential()
+obf_model = Sequential()
 for i in range(len(combined_model.layers)):
     if combined_model.layers[i] == combined_model.layers[-1]:
         continue
-    obf.add(combined_model.layers[i])
-obf.summary()
+    obf_model.add(combined_model.layers[i])
+obf_model.summary()
 
-with open(r'C:\train.pkl', "rb") as f:
-    X_train, y_train = pkl.load(f)
-X_train, X_test, y_train, y_test = train_test_split(X_train,
-                                                        y_train,
-                                                        test_size=0.1)
-test_img = X_test[-1]
-cv2.imwrite('aa.jpg', test_img)
-img = np.expand_dims(test_img, axis=0)
-output = obf.predict(img)
-output = np.squeeze(output, axis=0)
-# Split into individual channels
-channel_0 = output[:, :, 0]
-channel_1 = output[:, :, 1]
-channel_2 = output[:, :, 2]
+train_rec = False
+if train_rec:
+    train_path = r'C:\Users\yoyo\Desktop\EXJOBB\MasterThesis\Code\Train\0'
+    train_raw = load_images_from_folder(train_path)
+    test_path = r'C:\Users\yoyo\Desktop\EXJOBB\MasterThesis\Code\test\0'
+    test_raw = load_images_from_folder(test_path)
+    print("Shape of loaded train images array:", train_raw.shape)
+    print("Shape of loaded test images array:", test_raw.shape)
+    train_obf = obf_model.predict(train_raw)
+    test_obf = obf_model.predict(test_raw)
+    print("Shape of train_obf images array:", train_obf.shape)
+    print("Shape of test_obf images array:", test_obf.shape)
 
-normalized_channel_0 = (channel_0 / np.max(channel_0))*255
-normalized_channel_1 = (channel_1 / np.max(channel_1))*255
-normalized_channel_2 = (channel_2 / np.max(channel_2))*255
+    RecNet = get_obfmodel_mlp((64, 64, 3), num_neuron=1024)
+    RecNet.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    RecNet.fit(
+        x=train_obf,  # Input data (obfuscated images)
+        y=train_raw,  # Target data (original images)
+        epochs=1000,
+        validation_data=(test_obf, test_raw),
+        callbacks=[ModelCheckpoint('RecNet.h5',
+                                   monitor='val_accuracy',
+                                   verbose=1,
+                                   save_best_only=True,
+                                   mode='max')]
+    )
+    quit()
 
-normalized_img = np.stack([normalized_channel_0, normalized_channel_1, normalized_channel_2], axis=-1).astype(np.uint8)
-
-cv2.imwrite('bb.jpg', normalized_img)
-
-fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-
-# Display the first image on the first subplot
-axes[0].imshow(test_img)
-axes[0].set_title('Original image')
-
-# Display the second image on the second subplot
-axes[1].imshow(normalized_img)
-axes[1].set_title('Obfuscated image')
-
-# Adjust layout and show the figure
-plt.tight_layout()
-plt.show()
+RecNet = load_model('RecNet.h5')
+orig_test_img = np.array(load_img(r'C:\Users\yoyo\Desktop\EXJOBB\MasterThesis\Code\Images\ASL\33.png', target_size=(64, 64)))
+test_img = np.expand_dims(orig_test_img, axis=0)
+rec_img = RecNet.predict(test_img)
+rec_img = np.squeeze(rec_img, axis=0)
+rec_img = ((rec_img - np.min(rec_img)) / (np.max(rec_img) - np.min(rec_img)) * 255).astype(np.uint8)
+rec_img = cv2.cvtColor(rec_img, cv2.COLOR_BGR2RGB)
+cv2.imwrite(r'C:\Users\yoyo\Desktop\EXJOBB\MasterThesis\Code\Images\ASL\rec.png', rec_img)
+cv2.imwrite(r'C:\Users\yoyo\Desktop\EXJOBB\MasterThesis\Code\Images\ASL\input.png', orig_test_img)
