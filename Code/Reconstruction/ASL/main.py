@@ -4,14 +4,19 @@
 import os
 import numpy as np
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.layers import Conv2D, Dense, Dropout, Flatten, Reshape, Activation, MaxPooling2D
+from tensorflow.keras.layers import Conv2D, Dense, Dropout, Flatten, Input, Add, GlobalAveragePooling2D, \
+    DepthwiseConv2D, BatchNormalization, LeakyReLU, Reshape, Activation, MaxPooling2D
 from tensorflow.keras.models import Model, load_model, Sequential
-from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
+from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau
+# from tensorflow.keras.utils import multi_gpu_model
 import pickle as pkl
 from PIL import Image
 import datetime
+# from keras_radam import RAdam
 import tensorflow as tf
+
 # set random seed
 np.random.seed(1)
 tf.random.set_seed(1)
@@ -21,9 +26,8 @@ def get_data(folder):
     """Load the data and labels from the given folder."""
     train_len = 87000
     imageSize = 64
-
     X = np.empty((train_len, imageSize, imageSize, 3), dtype=np.float32)
-    y = np.empty((train_len, ), dtype=int)
+    y = np.empty((train_len,), dtype=np.int)
     cnt = 0
 
     for folderName in os.listdir(folder):
@@ -88,8 +92,8 @@ def get_data(folder):
                 label = 28
             else:
                 label = 29
-            for image_filename in os.listdir(folder + '\\' + folderName):
-                img_file = Image.open(folder + '\\' + folderName + '\\' +
+            for image_filename in os.listdir(folder + folderName):
+                img_file = Image.open(folder + folderName + '/' +
                                       image_filename)
                 # img_file = cv2.imread(folder + folderName + '/' + image_filename)
                 if img_file is not None:
@@ -179,22 +183,31 @@ def get_obfmodel_cnn(target_dims, num_neuron):
     return model
 
 
-def main(is_inf_cnn, is_obf_cnn, is_rec_cnn, obf_num_neuron, rec_num_neuron, train_obf, train_inf, train_rec, save_folder, dataset_path):
-
+def main(is_inf, is_inf_cnn, is_obf_cnn, num_neuron, inf_path, save_image,
+         is_gray, dataset_path):
     os.makedirs("models/asl/", exist_ok=True)
 
+    use_gpu = False
     batch_size = 64
     imageSize = 64
-    train_len = 87000
     target_dims = (imageSize, imageSize, 3)
     num_classes = 29
     max_epochs = 100
 
+    train_len = 87000
     log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_cb = TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-    with open("train.pkl", "rb") as f:
-        X_train, y_train = pkl.load(f)
+    if not dataset_path == '':
+        # use pickled dataset to save time
+        with open(dataset_path, "rb") as f:
+            X_train, y_train = pkl.load(f)
+    else:
+        get_data(dataset_path)
+
+    if is_gray:
+        X_train = grayscale(X_train)
+        target_dims = (imageSize, imageSize, 1)
 
     X_train, X_test, y_train, y_test = train_test_split(X_train,
                                                         y_train,
@@ -204,7 +217,7 @@ def main(is_inf_cnn, is_obf_cnn, is_rec_cnn, obf_num_neuron, rec_num_neuron, tra
     y_trainHot = to_categorical(y_train, num_classes=num_classes)
     y_testHot = to_categorical(y_test, num_classes=num_classes)
 
-    if train_inf:
+    if is_inf:
         if is_inf_cnn:
             inference_model = get_inference_model_cnn(target_dims, num_classes)
             inf_path = 'models/asl/inf-cnn.h5'
@@ -212,9 +225,21 @@ def main(is_inf_cnn, is_obf_cnn, is_rec_cnn, obf_num_neuron, rec_num_neuron, tra
             inference_model = get_inference_model_mlp(target_dims, num_classes)
             inf_path = 'models/asl/inf-mlp.h5'
 
+        if is_gray:
+            inf_path = inf_path.split('.')[0] + '-gray.h5'
+
         inference_model.compile(optimizer='adam',
                                 loss='categorical_crossentropy',
                                 metrics=["accuracy"])
+
+        if use_gpu:
+            # inference_model = multi_gpu_model(inference_model, gpus=4)
+            strategy = tf.distribute.MirroredStrategy()
+            with strategy.scope():
+                # inference_model = get_inference_model_mlp((64, 64, 3), num_classes)
+                inference_model.compile(optimizer='adam',
+                                        loss='categorical_crossentropy',
+                                        metrics=["accuracy"])
 
         infmodelcheck_cb = ModelCheckpoint(inf_path,
                                            monitor='val_accuracy',
@@ -225,53 +250,29 @@ def main(is_inf_cnn, is_obf_cnn, is_rec_cnn, obf_num_neuron, rec_num_neuron, tra
         inference_model.fit(x=X_train,
                             y=y_trainHot,
                             batch_size=batch_size,
-                            epochs=max_epochs,
-                            callbacks=[infmodelcheck_cb, tensorboard_cb],
+                            epochs=5,
+                            # callbacks=[infmodelcheck_cb, tensorboard_cb],
                             validation_data=(X_test, y_testHot))
     else:
-        inference_model = load_model('models/asl/inf.h5')
-
+        if inf_path == '':
+            raise ValueError(
+                'Please input path to inference network or train the inference model.'
+            )
+        inference_model = load_model(inf_path)
+        inference_model.compile(optimizer='adam',
+                                loss='categorical_crossentropy',
+                                metrics=["accuracy"])
 
     print(inference_model.summary())
     print('Inference Result: ')
-    print(inference_model.evaluate(X_test, y_testHot, verbose=0))
-    quit()
+    print(inference_model.evaluate(X_test, y_testHot, verbose=1))
+
     ######################
     # training of ObfNet #
     ######################
 
-    if is_obf_cnn:
-        obfmodel = get_obfmodel_cnn(target_dims, obf_num_neuron)
-    else:
-        obfmodel = get_obfmodel_mlp(target_dims, obf_num_neuron)
-        obfmodel.build((None, ) + target_dims)
-
-    inference_model.trainable = False
-    for l in inference_model.layers:
-        l.trainable = False
-
-    combined_model = Model(inputs=obfmodel.input,
-                           outputs=inference_model(obfmodel.output))
-    combined_model.compile(optimizer='adamdelta',
-                           loss='categorical_crossentropy',
-                           metrics=['accuracy'])
-
-    print(combined_model.summary())
     com_path = 'models/asl/combined-model.h5'
-
-    combined_model.fit(x=X_train,
-                       y=y_trainHot,
-                       batch_size=batch_size,
-                       epochs=max_epochs,
-                       callbacks=[
-                           ModelCheckpoint(com_path,
-                                           monitor='val_accuracy',
-                                           verbose=1,
-                                           save_best_only=True,
-                                           mode='max')
-                       ],
-                       verbose=1,
-                       validation_data=(X_test, y_testHot))
+    combined_model = load_model(com_path)
 
     ######################
     # testing of ObfNet #
@@ -280,64 +281,54 @@ def main(is_inf_cnn, is_obf_cnn, is_rec_cnn, obf_num_neuron, rec_num_neuron, tra
     score = combined_model.evaluate(X_test, y_testHot, verbose=0)
     print("Test loss:", score[0])
     print("Test accuracy:", score[1])
+    quit()
+    if save_image:
+        pos = {}
+        for i in range(num_classes):
+            pos[i] = -1
 
-    pos = {}
-    for i in range(num_classes):
-        pos[i] = -1
+        for ind, num in enumerate(y_test):
+            pos[num] = ind
+            if all(x != -1 for x in pos.values()):
+                break
 
-    for ind, num in enumerate(y_test):
-        pos[num] = ind
-        if all(x != -1 for x in pos.values()):
-            break
+        cls_pos = list(x for x in pos.values())
 
-    cls_pos = list(x for x in pos.values())
-
-    # from PIL import Image
-    # import cv2
-    #
-    # def get_concat_h(im1, im2):
-    #     dst =  Image.new('RGB', (im1.width + im2.width, im1.height))
-    #     dst.paste(im1, (0, 0))
-    #     dst.paste(im2, (im1.width, 0))
-    #     return dst
-    #
-    # h1 = []
-    # h2 = []
-    #
-    # for i in range(0, 11):
-    #     # h1 = Image.fromarray(X_test[i], 'RGB')
-    #     # h2 = Image.fromarray(layer_output[i], 'RGB')
-    #     # get_concat_h(h1, h2).save('imgs/c'+str(i)+'.jpg')
-    #     h1.append(X_test[i])
-    #     h2.append(layer_output[i])
-    #
-    # v1 = np.concatenate(np.array(h1), axis=1)
-    # v2 = np.concatenate(np.array(h2), axis=1)
-    # v = np.concatenate((v1, v2), axis=0)
-    # cv2.imwrite('imgs/cat.jpg', v)
-    # cv2.imwrite('imgs/cat1.jpg', v1)
-    # cv2.imwrite('imgs/cat2.jpg', v2)
+        # from PIL import Image
+        # import cv2
+        #
+        # def get_concat_h(im1, im2):
+        #     dst =  Image.new('RGB', (im1.width + im2.width, im1.height))
+        #     dst.paste(im1, (0, 0))
+        #     dst.paste(im2, (im1.width, 0))
+        #     return dst
+        #
+        # h1 = []
+        # h2 = []
+        #
+        # for i in range(0, 11):
+        #     # h1 = Image.fromarray(X_test[i], 'RGB')
+        #     # h2 = Image.fromarray(layer_output[i], 'RGB')
+        #     # get_concat_h(h1, h2).save('imgs/c'+str(i)+'.jpg')
+        #     h1.append(X_test[i])
+        #     h2.append(layer_output[i])
+        #
+        # v1 = np.concatenate(np.array(h1), axis=1)
+        # v2 = np.concatenate(np.array(h2), axis=1)
+        # v = np.concatenate((v1, v2), axis=0)
+        # cv2.imwrite('imgs/cat.jpg', v)
+        # cv2.imwrite('imgs/cat1.jpg', v1)
+        # cv2.imwrite('imgs/cat2.jpg', v2)
 
 
 if __name__ == "__main__":
     main(
-        # Control type of networks, use CNN or MLP
-        is_inf_cnn=False,
-        is_obf_cnn=True,
-        is_rec_cnn=False,
-
-        # Control the number of neurons in ObfNet and RecNet
-        obf_num_neuron=128,
-        rec_num_neuron=128,
-
-        # If train is true, it will try to train the corresponding network on MNIST and save weights
-        # Otherwise it will try to load the weights (will fail if not trained first, weights file won't be found)
-        # Sometimes we want to try out different combinations of ObfNet and RecNet, without re-training the InfNet
-        # Keep in mind that if the num_neurons is changed, the corresponding networks affected has to be re-trained
-        train_inf=False,
-        train_obf=True,
-        train_rec=True,
-
-        save_folder='a',
-        dataset_path='C:\ASL\\asl_alphabet_train'
+        is_inf=False,
+        is_inf_cnn=True,
+        is_obf_cnn=False,
+        num_neuron=1024,
+        inf_path='models/asl/inf-cnn.h5',
+        save_image=False,
+        is_gray=False,
+        dataset_path=r'C:\train.pkl'
     )
