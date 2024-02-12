@@ -7,10 +7,53 @@ from tensorflow.keras.layers import DepthwiseConv2D, MaxPooling2D, Conv2D, Batch
 from tensorflow.keras.layers import *
 import tensorflow as tf
 from tensorflow.keras.initializers import RandomNormal
+from keras.regularizers import l2
 
 tf.random.set_seed(2)  # For reproducibility
 np.random.seed(20)
 
+
+def lightweight_cnn_dense(input_shape=(224, 224, 3)):
+    model = Sequential(name='lightweight_cnn_dense_v1.3')
+    dropout_rate1 = 0.0  # Adjusted dropout rate
+    dropout_rate2 = 0.0  # Adjusted dropout rate
+
+    # Size: (224x224)
+    model.add(Conv2D(8, (3, 3), activation='relu', padding='same', input_shape=input_shape))
+    model.add(MaxPooling2D((2, 2), padding='same'))
+
+    # Size: (112x112)
+    model.add(Conv2D(16, (3, 3), activation='relu', padding='same'))
+    model.add(MaxPooling2D((2, 2), padding='same'))
+
+    # Size: (56x56)
+    model.add(Conv2D(32, (3, 3), activation='relu', padding='same'))
+    model.add(MaxPooling2D((2, 2), padding='same'))
+
+    # Size: (28x28)
+    # Two-layer dense design
+    model.add(Dropout(dropout_rate1))
+    model.add(Flatten())
+    latent_space = 8*8
+    latent_shape = (28, 28, 32)
+    model.add(Dense(latent_space, activation='relu', ))
+    model.add(Dense(np.prod(latent_shape), activation='relu'))
+    model.add(Dropout(dropout_rate2))
+    model.add(Reshape(latent_shape))
+
+    # Size: (28x28)
+    model.add(Conv2DTranspose(32, (3, 3), strides=2, activation='relu', padding='same'))
+
+    # Size: (56x56)
+    model.add(Conv2DTranspose(16, (3, 3), strides=2, activation='relu', padding='same'))
+
+    # Size: (112x112)
+    model.add(Conv2DTranspose(8, (3, 3), strides=2, activation='relu', padding='same'))
+
+    # Size: (224x224)
+    model.add(Conv2D(3, (3, 3), activation='relu', padding='same', name='decoded_output'))
+
+    return model
 
 def lightweight_cnn_1(input_shape=(224, 224, 3)):
     model = Sequential(name='lightweight_cnn_1')
@@ -29,6 +72,7 @@ def lightweight_cnn_1(input_shape=(224, 224, 3)):
     model.add(Conv2DTranspose(3, (3, 3), strides=2, activation='relu', padding='same'))  # Example upsampling
 
     return model
+
 
 
 def lightweight_cnn_2(input_shape=(224, 224, 3)):
@@ -150,6 +194,6 @@ def create_autoencoder(input_shape=(224, 224, 3)):
 
     return model
 
-
-m = up_sample((224, 224, 3))
-m.summary()
+if __name__ == "__main__":
+    m = lightweight_cnn_dense((224, 224, 3))
+    m.summary()
