@@ -12,6 +12,8 @@ import datetime
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.layers import *
+from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2_as_graph
+
 tf.random.set_seed(1)   # For reproducibility
 np.random.seed(1)
 
@@ -127,6 +129,51 @@ def get_pretrained_ResNet50(weights_dir):
     model.load_weights(weights_dir)
     return model
 
+def try_count_flops(model):
+  """Counts and returns model FLOPs.
+
+  Args:
+    model: A model instance.
+
+  Returns:
+    The model's FLOPs.
+
+  Notes:
+    This is a modified version of the following function:
+    https://www.tensorflow.org/api_docs/python/tfm/core/train_utils/try_count_flops
+  """
+  if hasattr(model, 'inputs'):
+    try:
+      # Get input shape and set batch size to 1.
+      if model.inputs:
+        inputs = [
+            tf.TensorSpec([1] + input.shape[1:], input.dtype)
+            for input in model.inputs
+        ]
+        concrete_func = tf.function(model).get_concrete_function(inputs)
+      # If model.inputs is invalid, try to use the input to get concrete
+      # function for model.call (subclass model).
+      else:
+        raise Exception('model.inputs is invalid, please initalize your model ')
+      frozen_func, _ = convert_variables_to_constants_v2_as_graph(concrete_func)
+
+      # Calculate FLOPs.
+      run_meta = tf.compat.v1.RunMetadata()
+      opts = tf.compat.v1.profiler.ProfileOptionBuilder.float_operation()
+      opts['output'] = 'none'
+      flops = tf.compat.v1.profiler.profile(
+          graph=frozen_func.graph, run_meta=run_meta, options=opts)
+      return flops.total_float_ops
+    except Exception as e:  # pylint: disable=broad-except
+      print('Failed to count model FLOPs with error %s, because the build() '
+          'methods in keras layers were not called. This is probably because '
+          'the model was not feed any input, e.g., the max train step already '
+          'reached before this run.', e)
+      return None
+  return None
+
 if __name__ == "__main__":
     model = get_pretrained_ResNet50(PATHS.RESNET_WEIGHTS)
     model.summary()
+    flops = try_count_flops(model)
+    print("ResNet50 FLOPs: {:,.0f}".format(flops))
