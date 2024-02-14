@@ -7,7 +7,7 @@ from tensorflow.keras.models import load_model
 
 
 def preprocess_data(data):
-    x_train, x_test, y_train, y_test = data
+    x_train, x_test, y_train, y_test, c_train, c_test = data
 
     # Normalize data
     x_train = x_train.astype('float32')
@@ -18,8 +18,10 @@ def preprocess_data(data):
     # convert class vectors to binary class matrices
     y_train = to_categorical(y_train, 10)
     y_test = to_categorical(y_test, 10)
+    c_train = to_categorical(c_train, 7)
+    c_test = to_categorical(c_test, 7)
 
-    return x_train, x_test, y_train, y_test
+    return x_train, x_test, y_train, y_test, c_train, c_test
 
 
 def get_inference_cnn(input_shape, num_classes):

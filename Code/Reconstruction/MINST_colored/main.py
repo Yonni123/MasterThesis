@@ -6,7 +6,7 @@ from model_trainer import *
 from RecNet_visualizer import visualize_recnets
 
 data = generate_data()
-x_train, x_test, y_train, y_test = preprocess_data(data['Obf'])  # Use only ObfNet data for both InfNet and ObfNet
+x_train, x_test, y_train, y_test, _, _ = preprocess_data(data['Obf'])  # Use only ObfNet data for both InfNet and ObfNet
 
 print('\n***InfNet***')
 # Load the InfModel or train it from scratch, this is a CNN-based InfNet
@@ -53,7 +53,7 @@ print('\n***RecNet***')
 # correspond to a different ObfNet, please don't be confused by it
 ######################################
 ######################################
-x_train, x_test, y_train, y_test = preprocess_data(data['Rec'])  # Switch to using the other half of the data
+x_train, x_test, y_train, y_test, _, _ = preprocess_data(data['Rec'])  # Switch to using the other half of the data
 print('RecNet - CNN')
 rec_models_cnn = []
 counter = 0 # This is just for indexing the ObfNets
