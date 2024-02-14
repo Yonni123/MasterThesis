@@ -2,19 +2,28 @@ import matplotlib.pyplot as plt
 import numpy as np
 from model_trainer import preprocess_data
 
-def visualize(obf_images, rec_images, names):
+def visualize(obf_images, rec_images, orig_imgs, names):
     N = len(obf_images)
-    fig, axes = plt.subplots(nrows=N, ncols=2, figsize=(8, 2 * N))
+    fig, axes = plt.subplots(nrows=N+1, ncols=2, figsize=(8, 2 * (N+1)))
+    black_img = np.zeros(shape=(28, 280, 3))
+
+    axes[0, 0].imshow(orig_imgs)
+    axes[0, 0].set_title('Original images')
+    axes[0, 0].axis('off')
+
+    axes[0, 1].imshow(black_img)
+    axes[0, 1].set_title('Black image')
+    axes[0, 1].axis('off')
 
     for i in range(N):
         name = names[i]
-        axes[i, 0].imshow(obf_images[i])
-        axes[i, 0].set_title(name[0])
-        axes[i, 0].axis('off')
+        axes[i+1, 0].imshow(obf_images[i])
+        axes[i+1, 0].set_title(name[0])
+        axes[i+1, 0].axis('off')
 
-        axes[i, 1].imshow(rec_images[i])
-        axes[i, 1].set_title(name[1])
-        axes[i, 1].axis('off')
+        axes[i+1, 1].imshow(rec_images[i])
+        axes[i+1, 1].set_title(name[1])
+        axes[i+1, 1].axis('off')
 
     plt.tight_layout()
     plt.show()
@@ -37,9 +46,5 @@ def visualize_recnets(obf_models, rec_models, data, names, verbose=0):
         obf_imgs.append(obfuscated)
         rec_imgs.append(reconstructed)
     orig_imgs = np.concatenate(np.array(test_imgs), axis=1)
-    plt.imshow(orig_imgs)
-    plt.axis('off')
-    plt.title('Input images')
-    plt.show(block=False)
-    visualize(obf_imgs, rec_imgs, names)
+    visualize(obf_imgs, rec_imgs, orig_imgs, names)
 
