@@ -37,7 +37,7 @@ def generate_data():
     print("Total training data: " + str(num_train_samples))
     print("Total testing data: " + str(num_test_samples))
 
-    print("\n Colorizing all images")
+    print("\nColorizing all images")
     x_train_colored = np.zeros((num_train_samples, 28, 28, 3))
     x_test_colored = np.zeros((num_test_samples, 28, 28, 3))
     for i in range(len(x_train)):

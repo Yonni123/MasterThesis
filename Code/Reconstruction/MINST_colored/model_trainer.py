@@ -173,3 +173,60 @@ def train_obf_model_cnn(x_train, x_test, y_train, y_test, inf_model, bottleneck=
     obf, inf = split_models(combined_model)
     return obf  # We don't need the inference network
 
+
+def train_obf_model_mlp(x_train, x_test, y_train, y_test, inf_model, bottleneck=512):
+    obf_model = get_obfmodel_mlp(
+        input_shape=(28, 28, 3),
+        num_neuron=bottleneck
+    )
+    combined_model = join_models(obf_model, inf_model)  # Join Obf and Inf together into a combined model
+    combined_model.layers[1].trainable = False          # Freeze the second layer, which is the inference model
+    combined_model.summary()
+
+    combined_model.compile(
+        loss='categorical_crossentropy',
+        optimizer='adam',
+        metrics=['accuracy']
+    )
+    combined_model.fit(
+        x_train, y_train,
+        batch_size=64,
+        epochs=30,
+        validation_data=(x_test, y_test),
+        callbacks=[
+            ModelCheckpoint(f'ObfNet_mlp/combined_model_{bottleneck}.h5',
+                            monitor='val_accuracy',
+                            verbose=1,
+                            save_best_only=True,
+                            mode='max')
+        ]
+    )
+    combined_model = load_model(f'ObfNet_mlp/combined_model_{bottleneck}.h5')
+    obf, inf = split_models(combined_model)
+    return obf  # We don't need the inference network
+
+
+def train_rec_model_mlp(ground_truth_train_images, ground_truth_test_images, obf_model, save_path='best_weights.h5'):
+    # Generate x_train and x_test by obfuscating the ground truth images
+    x_train = obf_model.predict(ground_truth_train_images)
+    x_test = obf_model.predict(ground_truth_test_images)
+    y_train = ground_truth_train_images # Just for more convenient naming
+    y_test = ground_truth_test_images
+
+    # Load a model architecture for ObfNet, since this is MLP, we will use ObfNet architecture with largest bottleneck
+    RecNet = get_obfmodel_mlp((28, 28, 3), 1024)
+    RecNet.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    RecNet.fit(
+        x=x_train,  # Input data (obfuscated images)
+        y=y_train,  # Target data (original images)
+        epochs=10,
+        validation_data=(x_test, y_test),
+        callbacks = [
+            ModelCheckpoint(save_path,
+                        monitor='val_accuracy',
+                        verbose=1,
+                        save_best_only=True,
+                        mode='max')
+        ]
+    )
+    return load_model(save_path)
