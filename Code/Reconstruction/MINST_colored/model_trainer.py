@@ -24,6 +24,16 @@ def preprocess_data(data):
     return x_train, x_test, y_train, y_test, c_train, c_test
 
 
+def get_color_model_mlp(input_shape, num_classes):
+    model = Sequential()
+    model.add(Flatten(input_shape=input_shape))
+    model.add(Dense(512, activation='relu'))
+    model.add(Dense(512, activation='relu'))
+    model.add(Dense(512, activation='relu'))
+    model.add(Dense(num_classes, activation='softmax'))
+    return model
+
+
 def get_inference_cnn(input_shape, num_classes):
     model = Sequential()
     model.add(
@@ -232,3 +242,31 @@ def train_rec_model_mlp(ground_truth_train_images, ground_truth_test_images, obf
         ]
     )
     return load_model(save_path)
+
+
+def train_color_model_mlp(ground_truth_train_images, ground_truth_test_images, c_train, c_test, obf_model, save_path='best_weights.h5'):
+    # Generate x_train and x_test by obfuscating the ground truth images
+    x_train = obf_model.predict(ground_truth_train_images)
+    x_test = obf_model.predict(ground_truth_test_images)
+
+    # Load a model architecture for ObfNet, since this is MLP, we will use ObfNet architecture with largest bottleneck
+    ColorNet = get_color_model_mlp((28, 28, 3), 7)  # We have seven colors
+    ColorNet.compile(
+        loss='categorical_crossentropy',
+        optimizer='adam',
+        metrics=['accuracy']
+    )
+    ColorNet.fit(
+        x_train, c_train,
+        batch_size=64,
+        epochs=100,
+        validation_data=(x_test, c_test),
+        callbacks=[
+            ModelCheckpoint(save_path,
+                            monitor='val_accuracy',
+                            verbose=1,
+                            save_best_only=True,
+                            mode='max')
+        ]
+    )
+    return load_model(save_path)  # Return the best model
