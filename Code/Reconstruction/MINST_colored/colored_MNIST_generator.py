@@ -90,5 +90,41 @@ def generate_data():
     }
 
 
+def generate_solid_data(N=30000):
+    unique_colors = np.random.rand(N, 1, 1, 3)
+    random_colors = unique_colors * np.ones((N, 28, 28, 3), dtype=np.uint8)
+    # Display 3x5 grid of original and colored images side by side
+    num_rows = 4
+    num_cols = 5
+    fig, axes = plt.subplots(num_rows, 2 * num_cols, figsize=(3 * num_cols, 2 * num_rows))
+
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # Display original images
+            axes[i, 2 * j].imshow(random_colors[i * num_cols + j])
+            axes[i, 2 * j].axis('off')
+
+            # Display colored images (normalize pixel values to [0, 1])
+            axes[i, 2 * j + 1].imshow(random_colors[N-1-(i * num_cols + j)])
+            axes[i, 2 * j + 1].axis('off')
+    plt.show()
+    return random_colors
+
+def generate_noisy_data(N=30000):
+    image = np.zeros((28, 28, 1), dtype=np.uint8)
+
+    # Generate white noise in the middle of the image
+    middle_x, middle_y = 28 // 2, 28 // 2
+    noise_intensity = 255  # Maximum intensity for white noise
+
+    for y in range(28):
+        for x in range(28):
+            distance_to_center = np.sqrt((x - middle_x) ** 2 + (y - middle_y) ** 2)
+            intensity = int(noise_intensity * (1 - distance_to_center / (28 / 2)))
+            image[y, x, 0] = np.clip(intensity, 0, 255)
+
+    plt.imshow(image)
+    plt.show()
+
 if __name__ == '__main__':
-    generate_data()
+    generate_noisy_data()

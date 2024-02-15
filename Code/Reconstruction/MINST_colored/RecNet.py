@@ -100,7 +100,7 @@ visualize_recnets(obf_models_mlp, rec_models_mlp, data, names=[
     ['ObfNet_MLP_512', 'RecNet_MLP_1024'],
     ['ObfNet_MLP_1024', 'RecNet_MLP_1024'],
 ])
-visualize_recnets(obf_models_mlp, rec_models_mlp, data, names=[
+visualize_recnets(obf_models_cnn, rec_models_cnn, data, names=[
     ['ObfNet_CNN_8', 'RecNet_MLP_1024'],
     ['ObfNet_CNN_16', 'RecNet_MLP_1024'],
     ['ObfNet_CNN_32', 'RecNet_MLP_1024'],
