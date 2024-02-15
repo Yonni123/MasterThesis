@@ -111,20 +111,54 @@ def generate_solid_data(N=30000):
     return random_colors
 
 def generate_noisy_data(N=30000):
-    image = np.zeros((28, 28, 1), dtype=np.uint8)
-
-    # Generate white noise in the middle of the image
-    middle_x, middle_y = 28 // 2, 28 // 2
+    # Image dimensions
+    width, height, channels = 28, 28, 1
+    # Generate static noise in the middle of the image
+    middle_x, middle_y = width // 2, height // 2
     noise_intensity = 255  # Maximum intensity for white noise
 
-    for y in range(28):
-        for x in range(28):
-            distance_to_center = np.sqrt((x - middle_x) ** 2 + (y - middle_y) ** 2)
-            intensity = int(noise_intensity * (1 - distance_to_center / (28 / 2)))
-            image[y, x, 0] = np.clip(intensity, 0, 255)
+    colored_images = np.zeros(shape=(N, 28, 28, 3))
+    classes = np.zeros(N)
 
-    plt.imshow(image)
+    for n in range(N):
+        if n % 100 == 0 and n != 0:
+            print(f"Generated {n} out of {N} images...")
+
+        image = np.zeros((height, width, channels), dtype=np.uint8)
+        for y in range(height):
+            for x in range(width):
+                distance_to_center = np.sqrt((x - middle_x) ** 2 + (y - middle_y) ** 2)
+                intensity = int(np.random.rand() * noise_intensity * (1 - distance_to_center / (width / 2)))
+                image[y, x, 0] = np.clip(intensity, 0, 255)
+
+        # Add random color to the image
+        image = np.squeeze(image, axis=2)
+        colored_image, keep_channel = add_random_color(image)
+        colored_image = colored_image.astype(np.float32)/noise_intensity
+        colored_images[n] = colored_image
+        classes[n] = keep_channel
+    print(f"Generated {N} out of {N} images...")
+
+    # Display 3x5 grid of original and colored images side by side
+    color_index = ['Red', 'Green', 'Blue', 'Aqua', 'Magenta', 'Yellow', 'White']
+    num_rows = 4
+    num_cols = 5
+    fig, axes = plt.subplots(num_rows, 2 * num_cols, figsize=(3 * num_cols, 2 * num_rows))
+
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # Display original images
+            axes[i, 2 * j].imshow(colored_images[i * num_cols + j])
+            axes[i, 2 * j].axis('off')
+            axes[i, 2 * j].set_title(color_index[int(classes[i * num_cols + j])])
+
+            # Display colored images (normalize pixel values to [0, 1])
+            axes[i, 2 * j + 1].imshow(colored_images[N - 1 - (i * num_cols + j)])
+            axes[i, 2 * j + 1].axis('off')
+            axes[i, 2 * j + 1].set_title(color_index[int(classes[N - 1 - (i * num_cols + j)])])
     plt.show()
+    return colored_images, classes
 
 if __name__ == '__main__':
-    generate_noisy_data()
+    data, c = generate_noisy_data(N=100)
+    print('a')

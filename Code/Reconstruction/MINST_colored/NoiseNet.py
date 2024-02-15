@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from tensorflow.keras.models import load_model
-from colored_MNIST_generator import generate_data
+from colored_MNIST_generator import generate_data, generate_noisy_data
 from model_trainer import *
 
 data = generate_data()
@@ -13,7 +13,7 @@ try:
     InfModel = load_model('inf_model.h5')
     loss, accuracy = InfModel.evaluate(x=x_test, y=y_test, verbose=0)
     print(f"Loaded InfNet model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}")
-except:
+except FileNotFoundError:
     print('Training CNN-based inference model...')
     InfModel = train_inf_model(x_train, x_test, y_train, y_test)
 
@@ -26,7 +26,7 @@ for bn in bottlenecks:  # Train CNN based ObfNets and store them in the obf_mode
         loss, accuracy = combined_model.evaluate(x=x_test, y=y_test, verbose=0)
         ObfModel, _ = split_models(combined_model)
         print(f"Loaded ObfNet model cnn with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Bottleneck: {bn}")
-    except:
+    except FileNotFoundError:
         print('Training ObfNet CNN-based model...')
         ObfModel = train_obf_model_cnn(x_train, x_test, y_train, y_test, InfModel, bottleneck=bn)
     obf_models_cnn.append(ObfModel)
@@ -38,53 +38,56 @@ for bn in bottlenecks:  # Train CNN based ObfNets and store them in the obf_mode
         loss, accuracy = combined_model.evaluate(x=x_test, y=y_test, verbose=0)
         ObfModel, _ = split_models(combined_model)
         print(f"Loaded ObfNet model mlp with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Bottleneck: {bn}")
-    except:
+    except FileNotFoundError:
         print('Training ObfNet MLP-based model...')
         ObfModel = train_obf_model_mlp(x_train, x_test, y_train, y_test, InfModel, bottleneck=bn)
     obf_models_mlp.append(ObfModel)
 
 print('\n***ColorNet***')
 x_train, x_test, y_train, y_test, c_train, c_test = preprocess_data(data['Rec'])  # Switch to using the other half of the data
-color_models_cnn = []
+noisy_images, colors = generate_noisy_data(N=30000) # Generate 30k noisy data to train the NoisyNet on
+colors = to_categorical(colors)
+
+noisy_models_cnn = []
 counter = 0 # This is just for indexing the ObfNets
 for bn in bottlenecks:  # Train CNN based ColorNets and store them in the color_models_mlp array
     obf_model = obf_models_cnn[counter]
     try:
-        ColorNet = load_model(f'ColorNet_cnn/ColorNet_{bn}.h5')
+        NoisyNet = load_model(f'NoisyNet_cnn/NoisyNet_{bn}.h5')
         x_test_obf = obf_model.predict(x_test, verbose=0)
-        loss, accuracy = ColorNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
-        print(f"Loaded ColorNet for Obf_cnn model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Obf_Bottleneck: {bn}")
+        loss, accuracy = NoisyNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
+        print(f"Loaded NoisyNet for Obf_cnn model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Obf_Bottleneck: {bn}")
     except:
-        print(f'Training ColorNet for Obf_cnn model with Obf_Bottleneck {bn}...')
-        ColorNet = train_color_model_mlp(
-            ground_truth_train_images=x_train,  # These images were never used during the creation of Inf and Obf nets
+        print(f'Training NoisyNet for Obf_cnn model with Obf_Bottleneck {bn}...')
+        NoisyNet = train_color_model_mlp(
+            ground_truth_train_images=noisy_images,
             ground_truth_test_images=x_test,
-            c_train=c_train,    # The color information
+            c_train=colors,    # The color information
             c_test=c_test,
             obf_model=obf_model,    # The CNN based obfnet
-            save_path = f'ColorNet_cnn/ColorNet_{bn}.h5'
+            save_path = f'NoisyNet_cnn/NoisyNet_{bn}.h5'
         )
-    color_models_cnn.append(ColorNet)
+    noisy_models_cnn.append(NoisyNet)
     counter += 1
 
-color_models_mlp = []
+noisy_models_mlp = []
 counter = 0 # This is just for indexing the ObfNets
 for bn in bottlenecks:  # Train MLP based ColorNets and store them in the color_models_mlp array
     obf_model = obf_models_mlp[counter]
     try:
-        ColorNet = load_model(f'ColorNet_mlp/ColorNet_{bn}.h5')
+        NoisyNet = load_model(f'NoisyNet_mlp/NoisyNet_{bn}.h5')
         x_test_obf = obf_model.predict(x_test, verbose=0)
-        loss, accuracy = ColorNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
-        print(f"Loaded ColorNet for Obf_mlp model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Obf_Bottleneck: {bn}")
+        loss, accuracy = NoisyNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
+        print(f"Loaded NoisyNet for Obf_mlp model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Obf_Bottleneck: {bn}")
     except:
-        print(f'Training ColorNet for Obf_mlp model with Obf_Bottleneck {bn}...')
-        ColorNet = train_color_model_mlp(
-            ground_truth_train_images=x_train,  # These images were never used during the creation of Inf and Obf nets
+        print(f'Training NoisyNet for Obf_mlp model with Obf_Bottleneck {bn}...')
+        NoisyNet = train_color_model_mlp(
+            ground_truth_train_images=noisy_images,
             ground_truth_test_images=x_test,
-            c_train=c_train,    # The color information
+            c_train=colors,    # The color information
             c_test=c_test,
             obf_model=obf_model,    # The MLP based obfnet
-            save_path = f'ColorNet_mlp/ColorNet_{bn}.h5'
+            save_path = f'NoisyNet_mlp/NoisyNet_{bn}.h5'
         )
-    color_models_mlp.append(ColorNet)
+    noisy_models_mlp.append(NoisyNet)
     counter += 1
