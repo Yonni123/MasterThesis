@@ -30,7 +30,7 @@ def visualize(obf_images, rec_images, orig_imgs, names):
 
 def visualize_recnets(obf_models, rec_models, data, names, verbose=0):
     _, x_test, _, _, _, _ = preprocess_data(data['Obf'])  # We only need testing images
-    indices = np.random.randint(0, x_test.shape[0], 10)
+    indices = np.array([117, 97, 23, 64, 8, 43, 111, 120, 5, 33])
     test_imgs = x_test[indices]
     obf_imgs = []
     rec_imgs = []

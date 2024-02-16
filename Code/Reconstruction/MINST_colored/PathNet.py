@@ -1,12 +1,10 @@
 import os
-
-import numpy as np
 from matplotlib import pyplot as plt
 from tensorflow.keras.models import load_model
-from colored_MNIST_generator import generate_data, generate_path_data
+from data_generator import generate_colored_MNIST, generate_path_data
 from model_trainer import *
 
-data = generate_data()
+data = generate_colored_MNIST()
 x_train, x_test, y_train, y_test, c_train, c_test = preprocess_data(data['Obf'])  # Use only ObfNet data for both InfNet and ObfNet
 
 print('\n***InfNet***')
@@ -65,14 +63,21 @@ x_train, x_test, y_train, y_test, c_train, c_test = preprocess_data(data['Rec'])
 path_data_generated = False
 
 path_models_cnn = []
+cnn_accuracies = []
 counter = 0 # This is just for indexing the ObfNets
 for bn in bottlenecks:  # Train CNN based ColorNets and store them in the color_models_mlp array
     obf_model = obf_models_cnn[counter]
     if os.path.exists(f'PathNet_cnn/PathNet_{bn}.h5'):
-        PathNet = load_model(f'PathNet_cnn/PathNet_{bn}.h5')
+        PathNet = load_model(f'PathNet_cnn/PathNet_{bn}.h5', compile=False)
+        PathNet.compile(
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=['accuracy']
+        )
         x_test_obf = obf_model.predict(x_test, verbose=0)
         loss, accuracy = PathNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
         print(f"Loaded PathNet for Obf_cnn model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Obf_Bottleneck: {bn}")
+        cnn_accuracies.append(accuracy*100)
     else:
         print(f'Training PathNet for Obf_cnn model with Obf_Bottleneck {bn}...')
         if not path_data_generated:
@@ -91,14 +96,21 @@ for bn in bottlenecks:  # Train CNN based ColorNets and store them in the color_
     counter += 1
 
 path_models_mlp = []
+mlp_accuracies = []
 counter = 0 # This is just for indexing the ObfNets
 for bn in bottlenecks:  # Train MLP based ColorNets and store them in the color_models_mlp array
     obf_model = obf_models_mlp[counter]
+    x_test_obf = obf_model.predict(x_test, verbose=0)
     if os.path.exists(f'PathNet_mlp/PathNet_{bn}.h5'):
-        PathNet = load_model(f'PathNet_mlp/PathNet_{bn}.h5')
-        x_test_obf = obf_model.predict(x_test, verbose=0)
+        PathNet = load_model(f'PathNet_mlp/PathNet_{bn}.h5', compile=False)
+        PathNet.compile(
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=['accuracy']
+        )
         loss, accuracy = PathNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
         print(f"Loaded PathNet for Obf_mlp model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Obf_Bottleneck: {bn}")
+        mlp_accuracies.append(accuracy*100)
     else:
         print(f'Training PathNet for Obf_mlp model with Obf_Bottleneck {bn}...')
         if not path_data_generated:
@@ -113,5 +125,22 @@ for bn in bottlenecks:  # Train MLP based ColorNets and store them in the color_
             obf_model=obf_model,    # The MLP based obfnet
             save_path = f'PathNet_mlp/PathNet_{bn}.h5'
         )
+        loss, accuracy = PathNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
+        mlp_accuracies.append(accuracy * 100)
     path_models_mlp.append(PathNet)
     counter += 1
+
+# Plotting the accuracies over bottlenecks
+plt.plot(bottlenecks, mlp_accuracies, label='MLP-Based ObfNet')
+plt.plot(bottlenecks, cnn_accuracies, label='CNN-Based ObfNet')
+
+# Adding labels and title
+plt.xlabel('Bottleneck')
+plt.ylabel('Accuracy %')
+plt.title('Accuracy over Bottleneck using PathNet-MLP')
+
+# Adding legend
+plt.legend()
+
+# Display the plot
+plt.show()

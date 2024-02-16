@@ -30,7 +30,7 @@ def add_random_color(image):
     return colored.astype(np.uint8), keep_channel
 
 
-def generate_data():
+def generate_colored_MNIST():
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     num_train_samples = x_train.shape[0]
     num_test_samples = x_test.shape[0]
@@ -82,6 +82,7 @@ def generate_data():
             axes[i, 2 * j + 1].imshow(x_train_colored[i * num_cols + j] / 255.0)
             axes[i, 2 * j + 1].axis('off')
             axes[i, 2 * j + 1].set_title(color_index[int(train_colors[i * num_cols + j])])
+    plt.suptitle('Colored MNIST Example Data', fontsize=16)
     plt.show()
 
     return {
@@ -107,6 +108,7 @@ def generate_solid_data(N=30000):
             # Display colored images (normalize pixel values to [0, 1])
             axes[i, 2 * j + 1].imshow(random_colors[N-1-(i * num_cols + j)])
             axes[i, 2 * j + 1].axis('off')
+    plt.suptitle('Random Solid Example Data', fontsize=16)
     plt.show()
     return random_colors
 
@@ -156,6 +158,7 @@ def generate_noisy_data(N=30000):
             axes[i, 2 * j + 1].imshow(colored_images[N - 1 - (i * num_cols + j)])
             axes[i, 2 * j + 1].axis('off')
             axes[i, 2 * j + 1].set_title(color_index[int(classes[N - 1 - (i * num_cols + j)])])
+    plt.suptitle('Random Noise Example Data', fontsize=16)
     plt.show()
     return colored_images, classes
 
@@ -222,9 +225,13 @@ def generate_path_data(N=30000):
             axes[i, 2 * j + 1].imshow(colored_images[N - 1 - (i * num_cols + j)])
             axes[i, 2 * j + 1].axis('off')
             axes[i, 2 * j + 1].set_title(color_index[int(classes[N - 1 - (i * num_cols + j)])])
+    plt.suptitle('Random Path Example Data', fontsize=16)
     plt.show()
     return colored_images, classes
 
 if __name__ == '__main__':
-    data, c = generate_path_data(N=50)
-    print('a')
+    generate_colored_MNIST()
+    generate_solid_data(N=50)
+    generate_noisy_data(N=50)
+    generate_path_data(N=50)
+

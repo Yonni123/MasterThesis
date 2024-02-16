@@ -3,10 +3,10 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 from tensorflow.keras.models import load_model
-from colored_MNIST_generator import generate_data, generate_noisy_data
+from data_generator import generate_colored_MNIST, generate_noisy_data
 from model_trainer import *
 
-data = generate_data()
+data = generate_colored_MNIST()
 x_train, x_test, y_train, y_test, c_train, c_test = preprocess_data(data['Obf'])  # Use only ObfNet data for both InfNet and ObfNet
 
 print('\n***InfNet***')
@@ -65,14 +65,21 @@ x_train, x_test, y_train, y_test, c_train, c_test = preprocess_data(data['Rec'])
 noisy_data_generated = False
 
 noisy_models_cnn = []
+cnn_accuracies = []
 counter = 0 # This is just for indexing the ObfNets
 for bn in bottlenecks:  # Train CNN based ColorNets and store them in the color_models_mlp array
     obf_model = obf_models_cnn[counter]
+    x_test_obf = obf_model.predict(x_test, verbose=0)
     if os.path.exists(f'NoisyNet_cnn/NoisyNet_{bn}.h5'):
-        NoisyNet = load_model(f'NoisyNet_cnn/NoisyNet_{bn}.h5')
-        x_test_obf = obf_model.predict(x_test, verbose=0)
+        NoisyNet = load_model(f'NoisyNet_cnn/NoisyNet_{bn}.h5', compile=False)
+        NoisyNet.compile(
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=['accuracy']
+        )
         loss, accuracy = NoisyNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
         print(f"Loaded NoisyNet for Obf_cnn model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Obf_Bottleneck: {bn}")
+        cnn_accuracies.append(accuracy*100)
     else:
         print(f'Training NoisyNet for Obf_cnn model with Obf_Bottleneck {bn}...')
         if not noisy_data_generated:
@@ -87,18 +94,27 @@ for bn in bottlenecks:  # Train CNN based ColorNets and store them in the color_
             obf_model=obf_model,    # The CNN based obfnet
             save_path = f'NoisyNet_cnn/NoisyNet_{bn}.h5'
         )
+        loss, accuracy = NoisyNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
+        cnn_accuracies.append(accuracy * 100)
     noisy_models_cnn.append(NoisyNet)
     counter += 1
 
 noisy_models_mlp = []
+mlp_accuracies = []
 counter = 0 # This is just for indexing the ObfNets
 for bn in bottlenecks:  # Train MLP based ColorNets and store them in the color_models_mlp array
     obf_model = obf_models_mlp[counter]
+    x_test_obf = obf_model.predict(x_test, verbose=0)
     if os.path.exists(f'NoisyNet_mlp/NoisyNet_{bn}.h5'):
-        NoisyNet = load_model(f'NoisyNet_mlp/NoisyNet_{bn}.h5')
-        x_test_obf = obf_model.predict(x_test, verbose=0)
+        NoisyNet = load_model(f'NoisyNet_mlp/NoisyNet_{bn}.h5', compile=False)
+        NoisyNet.compile(
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=['accuracy']
+        )
         loss, accuracy = NoisyNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
         print(f"Loaded NoisyNet for Obf_mlp model with Accuracy: {accuracy * 100:.2f}%, Loss: {loss:.4f}, Obf_Bottleneck: {bn}")
+        mlp_accuracies.append(accuracy*100)
     else:
         print(f'Training NoisyNet for Obf_mlp model with Obf_Bottleneck {bn}...')
         if not noisy_data_generated:
@@ -113,5 +129,22 @@ for bn in bottlenecks:  # Train MLP based ColorNets and store them in the color_
             obf_model=obf_model,    # The MLP based obfnet
             save_path = f'NoisyNet_mlp/NoisyNet_{bn}.h5'
         )
+        loss, accuracy = NoisyNet.evaluate(x=x_test_obf, y=c_test, verbose=0)
+        mlp_accuracies.append(accuracy * 100)
     noisy_models_mlp.append(NoisyNet)
     counter += 1
+
+# Plotting the accuracies over bottlenecks
+plt.plot(bottlenecks, mlp_accuracies, label='MLP-Based ObfNet')
+plt.plot(bottlenecks, cnn_accuracies, label='CNN-Based ObfNet')
+
+# Adding labels and title
+plt.xlabel('Bottleneck')
+plt.ylabel('Accuracy %')
+plt.title('Accuracy over Bottleneck using NoisyNet-MLP')
+
+# Adding legend
+plt.legend()
+
+# Display the plot
+plt.show()
