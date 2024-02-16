@@ -159,6 +159,72 @@ def generate_noisy_data(N=30000):
     plt.show()
     return colored_images, classes
 
+
+def generate_path_data(N=30000):
+    # Image dimensions
+    width, height, channels = 28, 28, 1
+    # Generate static noise in the middle of the image
+    middle_x, middle_y = width // 2, height // 2
+    noise_intensity = 255  # Maximum intensity for white noise
+    step_size = 2  # Adjust the step size
+    thickness = 1
+
+    colored_images = np.zeros(shape=(N, 28, 28, 3))
+    classes = np.zeros(N)
+
+    for n in range(N):
+        if n % 100 == 0 and n != 0:
+            print(f"Generated {n} out of {N} images...")
+
+        image = np.zeros((height, width, channels), dtype=np.uint8)
+
+        current_position = np.array([width // 2, height // 2])  # Start at the center of the image
+
+        # Randomly generate a path for the digit
+        num_steps = 30
+        path = np.cumsum(np.random.randint(-step_size, step_size + 1, size=(num_steps, 2)), axis=0)
+
+        for step in path:
+            x, y = current_position + step
+            x, y = int(x), int(y)
+
+            if 0 <= x < width and 0 <= y < height:
+                for i in range(-thickness // 2, thickness // 2 + 1):
+                    for j in range(-thickness // 2, thickness // 2 + 1):
+                        nx, ny = x + i, y + j
+                        if 0 <= nx < width and 0 <= ny < height:
+                            intensity = int(np.random.normal(loc=noise_intensity, scale=noise_intensity / 2))
+                            intensity = np.clip(intensity, 0, 255)
+                            image[ny, nx, 0] = intensity
+
+        # Add random color to the image
+        image = np.squeeze(image, axis=2)
+        colored_image, keep_channel = add_random_color(image)
+        colored_image = colored_image.astype(np.float32)/noise_intensity
+        colored_images[n] = colored_image
+        classes[n] = keep_channel
+    print(f"Generated {N} out of {N} images...")
+
+    # Display 3x5 grid of original and colored images side by side
+    color_index = ['Red', 'Green', 'Blue', 'Aqua', 'Magenta', 'Yellow', 'White']
+    num_rows = 4
+    num_cols = 5
+    fig, axes = plt.subplots(num_rows, 2 * num_cols, figsize=(3 * num_cols, 2 * num_rows))
+
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # Display original images
+            axes[i, 2 * j].imshow(colored_images[i * num_cols + j])
+            axes[i, 2 * j].axis('off')
+            axes[i, 2 * j].set_title(color_index[int(classes[i * num_cols + j])])
+
+            # Display colored images (normalize pixel values to [0, 1])
+            axes[i, 2 * j + 1].imshow(colored_images[N - 1 - (i * num_cols + j)])
+            axes[i, 2 * j + 1].axis('off')
+            axes[i, 2 * j + 1].set_title(color_index[int(classes[N - 1 - (i * num_cols + j)])])
+    plt.show()
+    return colored_images, classes
+
 if __name__ == '__main__':
-    data, c = generate_noisy_data(N=100)
+    data, c = generate_path_data(N=50)
     print('a')

@@ -259,7 +259,7 @@ def train_color_model_mlp(ground_truth_train_images, ground_truth_test_images, c
     ColorNet.fit(
         x_train, c_train,
         batch_size=64,
-        epochs=100,
+        epochs=50,
         validation_data=(x_test, c_test),
         callbacks=[
             ModelCheckpoint(save_path,
