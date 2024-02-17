@@ -15,13 +15,13 @@ def PCA_analysis(data, labels, n_components=2, blocking=True, title='PCA Scatter
     flattened = data.reshape(data.shape[0], -1)
 
     # Normalize the data (optional but recommended)
-    td_normalized = flattened / 255.0  # Assuming pixel values are in the range [0, 255]
+    # td_normalized = flattened / 255.0  # Assuming pixel values are in the range [0, 255]
 
     # Instantiate PCA with the desired number of components
     pca = PCA(n_components=n_components, random_state=42)
 
     # Fit PCA on the normalized data
-    pca_result = pca.fit_transform(td_normalized)
+    pca_result = pca.fit_transform(flattened)
 
     if len(np.unique(labels)) == 7:
         # Define colors for each class
@@ -78,13 +78,13 @@ def tSNE_analysis(data, labels, perplexity=30, blocking=True, title='t-SNE Scatt
     flattened = data.reshape(data.shape[0], -1)
 
     # Normalize the data (optional but recommended)
-    td_normalized = flattened / 255.0  # Assuming pixel values are in the range [0, 255]
+    # td_normalized = flattened / 255.0  # Assuming pixel values are in the range [0, 255]
 
     # Instantiate t-SNE
     tsne = TSNE(n_components=2, perplexity=perplexity, random_state=42)  # You can adjust the perplexity as needed
 
     # Fit t-SNE on the normalized data
-    tsne_result = tsne.fit_transform(td_normalized)
+    tsne_result = tsne.fit_transform(flattened)
 
     if len(np.unique(labels)) == 7:
         # Define colors for each class
@@ -163,5 +163,6 @@ print(f"Loaded RecNet model cnn with ObfNet BottleNeck {bottleneck}")
 x_test_obf = ObfModel.predict(x_test)
 x_test_rec = RecNet.predict(x_test_obf)
 #tSNE_analysis(x_test, c_test, title=f't-SNE plot of colored MNIST images (raw data)', blocking=False)
-tSNE_analysis(x_test_obf, c_test, title=f't-SNE plot of colored MNIST images obfuscated using a {ObfNet_type}-based ObfNet with bottleneck of {bottleneck}', blocking=True)
+tSNE_analysis(x_test_obf, c_test, perplexity=15, title=f't-SNE plot of colored MNIST images obfuscated using a {ObfNet_type}-based ObfNet with bottleneck of {bottleneck}', blocking=False)
+tSNE_analysis(x_test_obf, y_test, perplexity=15, title=f't-SNE plot of colored MNIST images obfuscated using a {ObfNet_type}-based ObfNet with bottleneck of {bottleneck}', blocking=True)
 #tSNE_analysis(x_test_rec, c_test, title=f't-SNE plot of colored MNIST images reconstructed from obfuscated images using a {ObfNet_type}-based ObfNet with bottleneck of {bottleneck}')
