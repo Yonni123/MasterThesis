@@ -138,10 +138,10 @@ def tSNE_analysis(data, labels, perplexity=30, blocking=True, title='t-SNE Scatt
 
 
 data = generate_colored_MNIST()
-_, x_test, _, _, _, _ = preprocess_data(data['Obf'])  # Use only ObfNet data for both InfNet and ObfNet
-_, _, _, y_test, _, c_test = (data['Obf'])  # We need the labels without 'to_categorical()' in preprocess
-bottleneck = 1024
-ObfNet_type = 'mlp'
+x_train, x_test, _, _, _, _ = preprocess_data(data['Obf'])  # Use only ObfNet data for both InfNet and ObfNet
+_, _, y_train, y_test, c_train, c_test = (data['Obf'])  # We need the labels without 'to_categorical()' in preprocess
+bottleneck = 8
+ObfNet_type = 'cnn'
 
 combined_model = load_model(f'ObfNet_{ObfNet_type}/combined_model_{bottleneck}.h5', compile=False)
 combined_model.compile(
@@ -163,6 +163,6 @@ print(f"Loaded RecNet model cnn with ObfNet BottleNeck {bottleneck}")
 x_test_obf = ObfModel.predict(x_test)
 x_test_rec = RecNet.predict(x_test_obf)
 #tSNE_analysis(x_test, c_test, title=f't-SNE plot of colored MNIST images (raw data)', blocking=False)
-tSNE_analysis(x_test_obf, c_test, perplexity=15, title=f't-SNE plot of colored MNIST images obfuscated using a {ObfNet_type}-based ObfNet with bottleneck of {bottleneck}', blocking=False)
-tSNE_analysis(x_test_obf, y_test, perplexity=15, title=f't-SNE plot of colored MNIST images obfuscated using a {ObfNet_type}-based ObfNet with bottleneck of {bottleneck}', blocking=True)
+tSNE_analysis(x_test_obf, c_test, perplexity=15, title=f't-SNE plot of Colored-MNIST images obfuscated using a {ObfNet_type.upper()}-based ObfNet with bottleneck of {bottleneck}', blocking=False)
+tSNE_analysis(x_test_obf, y_test, perplexity=15, title=f't-SNE plot of colored-MNIST images obfuscated using a {ObfNet_type.upper()}-based ObfNet with bottleneck of {bottleneck}', blocking=True)
 #tSNE_analysis(x_test_rec, c_test, title=f't-SNE plot of colored MNIST images reconstructed from obfuscated images using a {ObfNet_type}-based ObfNet with bottleneck of {bottleneck}')

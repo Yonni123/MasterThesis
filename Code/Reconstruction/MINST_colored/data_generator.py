@@ -66,22 +66,17 @@ def generate_colored_MNIST():
     y_test_rec, c_test_rec = stacked_test_rec[:, 0], stacked_test_rec[:, 1]
 
     # Display 3x5 grid of original and colored images side by side
-    num_rows = 4
+    num_rows = 3
     num_cols = 5
-    fig, axes = plt.subplots(num_rows, 2 * num_cols, figsize=(3 * num_cols, 2*num_rows))
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(3 * num_cols, 2*num_rows))
     color_index = ['Red', 'Green', 'Blue', 'Aqua', 'Magenta', 'Yellow', 'White']
 
     for i in range(num_rows):
         for j in range(num_cols):
-            # Display original images
-            axes[i, 2 * j].imshow(x_train[i * num_cols + j], cmap='gray')
-            axes[i, 2 * j].axis('off')
-            axes[i, 2 * j].set_title('ORIGINAL')
-
             # Display colored images (normalize pixel values to [0, 1])
-            axes[i, 2 * j + 1].imshow(x_train_colored[i * num_cols + j] / 255.0)
-            axes[i, 2 * j + 1].axis('off')
-            axes[i, 2 * j + 1].set_title(color_index[int(train_colors[i * num_cols + j])])
+            axes[i, j].imshow(x_train_colored[i * num_cols + j + 5] / 255.0)
+            axes[i, j].axis('off')
+            axes[i, j].set_title(color_index[int(train_colors[i * num_cols + j + 5])])
     plt.suptitle('Colored MNIST Example Data', fontsize=16)
     plt.show()
 
@@ -142,23 +137,18 @@ def generate_noisy_data(N=30000):
     print(f"Generated {N} out of {N} images...")
 
     # Display 3x5 grid of original and colored images side by side
-    color_index = ['Red', 'Green', 'Blue', 'Aqua', 'Magenta', 'Yellow', 'White']
-    num_rows = 4
+    num_rows = 3
     num_cols = 5
-    fig, axes = plt.subplots(num_rows, 2 * num_cols, figsize=(3 * num_cols, 2 * num_rows))
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(3 * num_cols, 2 * num_rows))
+    color_index = ['Red', 'Green', 'Blue', 'Aqua', 'Magenta', 'Yellow', 'White']
 
     for i in range(num_rows):
         for j in range(num_cols):
-            # Display original images
-            axes[i, 2 * j].imshow(colored_images[i * num_cols + j])
-            axes[i, 2 * j].axis('off')
-            axes[i, 2 * j].set_title(color_index[int(classes[i * num_cols + j])])
-
             # Display colored images (normalize pixel values to [0, 1])
-            axes[i, 2 * j + 1].imshow(colored_images[N - 1 - (i * num_cols + j)])
-            axes[i, 2 * j + 1].axis('off')
-            axes[i, 2 * j + 1].set_title(color_index[int(classes[N - 1 - (i * num_cols + j)])])
-    plt.suptitle('Random Noise Example Data', fontsize=16)
+            axes[i, j].imshow(colored_images[i * num_cols + j + 29])
+            axes[i, j].axis('off')
+            axes[i, j].set_title(color_index[int(classes[i * num_cols + j + 29])])
+    plt.suptitle('Colored MNIST Example Data', fontsize=16)
     plt.show()
     return colored_images, classes
 
@@ -209,29 +199,24 @@ def generate_path_data(N=30000):
     print(f"Generated {N} out of {N} images...")
 
     # Display 3x5 grid of original and colored images side by side
-    color_index = ['Red', 'Green', 'Blue', 'Aqua', 'Magenta', 'Yellow', 'White']
-    num_rows = 4
+    num_rows = 3
     num_cols = 5
-    fig, axes = plt.subplots(num_rows, 2 * num_cols, figsize=(3 * num_cols, 2 * num_rows))
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(3 * num_cols, 2 * num_rows))
+    color_index = ['Red', 'Green', 'Blue', 'Aqua', 'Magenta', 'Yellow', 'White']
 
     for i in range(num_rows):
         for j in range(num_cols):
-            # Display original images
-            axes[i, 2 * j].imshow(colored_images[i * num_cols + j])
-            axes[i, 2 * j].axis('off')
-            axes[i, 2 * j].set_title(color_index[int(classes[i * num_cols + j])])
-
             # Display colored images (normalize pixel values to [0, 1])
-            axes[i, 2 * j + 1].imshow(colored_images[N - 1 - (i * num_cols + j)])
-            axes[i, 2 * j + 1].axis('off')
-            axes[i, 2 * j + 1].set_title(color_index[int(classes[N - 1 - (i * num_cols + j)])])
-    plt.suptitle('Random Path Example Data', fontsize=16)
+            axes[i, j].imshow(colored_images[i * num_cols + j + 20])
+            axes[i, j].axis('off')
+            axes[i, j].set_title(color_index[int(classes[i * num_cols + j + 20])])
+    plt.suptitle('Colored MNIST Example Data', fontsize=16)
     plt.show()
     return colored_images, classes
 
 if __name__ == '__main__':
-    generate_colored_MNIST()
-    generate_solid_data(N=50)
-    generate_noisy_data(N=50)
-    generate_path_data(N=50)
+    #generate_colored_MNIST()
+    #generate_solid_data(N=50)
+    generate_noisy_data(N=100)
+    #generate_path_data(N=100)
 

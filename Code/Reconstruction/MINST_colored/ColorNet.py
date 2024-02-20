@@ -126,7 +126,7 @@ plt.plot(bottlenecks, cnn_accuracies, label='CNN-Based ObfNet')
 # Adding labels and title
 plt.xlabel('Bottleneck')
 plt.ylabel('Accuracy %')
-plt.title('Accuracy over Bottleneck using ColorNet-MLP')
+plt.title('Accuracy over Bottleneck using ColorNet')
 
 # Adding legend
 plt.legend()

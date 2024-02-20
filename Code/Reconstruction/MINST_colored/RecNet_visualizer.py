@@ -1,8 +1,25 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from model_trainer import preprocess_data
+from PIL import Image
 
-def visualize(obf_images, rec_images, orig_imgs, names):
+def save_image(image_array, path):
+    # Ensure pixel values are in the range [0, 255]
+    image_array = (image_array * 255).astype(np.uint8)
+
+    # Create a PIL Image object from the numpy array
+    image = Image.fromarray(image_array)
+
+    # Save the image to the specified path
+    image.save(path)
+
+def visualize(obf_images, rec_images, orig_imgs, names, save=False):
+    if save:
+        save_image(orig_imgs, path='colored_MNIST_example.png')
+        for obf, rec, bn in zip(obf_images, rec_images, [8, 16, 32, 64, 128, 256, 512, 1024]):
+            save_image(obf, path=f'Obf/{bn}.png')
+            save_image(rec, path=f'Rec/{bn}.png')
+
     N = len(obf_images)
     fig, axes = plt.subplots(nrows=N+1, ncols=2, figsize=(8, 2 * (N+1)))
     black_img = np.zeros(shape=(28, 280, 3))
